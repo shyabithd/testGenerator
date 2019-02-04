@@ -1,0 +1,212 @@
+/**
+ * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
+ * contributors
+ *
+ * This file is part of EvoSuite.
+ *
+ * EvoSuite is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3.0 of the License, or
+ * (at your option) any later version.
+ *
+ * EvoSuite is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
+ */
+package generator.testcase.statement;
+
+import generator.testcase.TestCase;
+import generator.testcase.variable.VariableReference;
+import generator.utils.GenericClass;
+
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+
+/**
+ * Statement assigning a primitive numeric value
+ *
+ * @param <T>
+ * @author Gordon Fraser
+ */
+public abstract class PrimitiveStatement<T> extends AbstractStatement {
+
+    private static final long serialVersionUID = -7721106626421922833L;
+
+    /**
+     * The value
+     */
+    protected transient T value;
+
+    public PrimitiveStatement(TestCase tc, VariableReference varRef, T value) {
+        super(tc, (Type) varRef);
+        this.value = value;
+    }
+
+    /**
+     * Access the value
+     *
+     * @return a T object.
+     */
+    public T getValue() {
+        return value;
+    }
+
+    /**
+     * Set the value
+     *
+     * @param val a T object.
+     */
+    public void setValue(T val) {
+        this.value = val;
+    }
+
+    public boolean hasMoreThanOneValue() {
+        return true;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static PrimitiveStatement<?> getPrimitiveStatement(TestCase tc,
+                                                              GenericClass genericClass) {
+        // TODO This kills the benefit of inheritance.
+        // Let each class implement the clone method instead
+
+        Class<?> clazz = genericClass.getRawClass();
+        PrimitiveStatement<?> statement = null;
+
+        return statement;
+    }
+
+    public static PrimitiveStatement<?> getRandomStatement(TestCase tc,
+                                                           GenericClass clazz, int position) {
+
+        PrimitiveStatement<?> statement = getPrimitiveStatement(tc, clazz);
+        statement.randomize();
+        return statement;
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Statement copy(TestCase newTestCase, int offset) {
+        //        PrimitiveStatement<T> clone = (PrimitiveStatement<T>) getPrimitiveStatement(newTestCase,
+//                retval.getGenericClass());
+        //clone.setValue(value);
+        // clone.assertions = copyAssertions(newTestCase, offset);
+//        return clone;
+        return null;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object s) {
+        if (this == s)
+            return true;
+        if (s == null)
+            return false;
+        if (getClass() != s.getClass())
+            return false;
+
+        PrimitiveStatement<?> ps = (PrimitiveStatement<?>) s;
+        return false;
+        //return (retval.equals(ps.retval) && value.equals(ps.value));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 21;
+        int result = 1;
+        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        return result;
+    }
+
+    /**
+     * Add a random delta to the value
+     */
+    public abstract void delta();
+
+    /**
+     * Reset value to default value 0
+     */
+    public abstract void zero();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean same(Statement s) {
+        if (this == s)
+            return true;
+        if (s == null)
+            return false;
+        if (getClass() != s.getClass())
+            return false;
+
+        PrimitiveStatement<?> ps = (PrimitiveStatement<?>) s;
+
+        boolean sameValue = false;
+        if (value == null) {
+            sameValue = (ps.value == null);
+        } else {
+            sameValue = value.equals(ps.value);
+        }
+
+//        assert retval != null && ps.retval != null;
+//
+//        return (sameValue && retval.same(ps.retval));
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+        return getCode();
+    }
+
+    @SuppressWarnings("unused")
+    private void mutateTransformedBoolean(TestCase test) {
+    }
+
+    /**
+     * Set to a random value
+     */
+    public abstract void randomize();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isAssignmentStatement() {
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void changeClassLoader(ClassLoader loader) {
+        super.changeClassLoader(loader);
+    }
+
+}
