@@ -369,6 +369,11 @@ public abstract class AbstractStatement implements Statement, Serializable {
 		return result;
 	}
 
+	@Override
+	public Statement clone() {
+		return null;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.evosuite.testcase.StatementInterface#changeClassLoader(java.lang.ClassLoader)
 	 */

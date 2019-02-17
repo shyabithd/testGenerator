@@ -19,7 +19,7 @@
  */
 package generator.result;
 
-import generator.FitnessFunction;
+import generator.ga.FitnessFunction;
 
 import java.io.Serializable;
 import java.util.Set;

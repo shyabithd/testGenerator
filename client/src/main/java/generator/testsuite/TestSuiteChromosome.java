@@ -19,6 +19,9 @@
  */
 package generator.testsuite;
 
+import generator.ga.Chromosome;
+import generator.ga.LocalSearchObjective;
+import generator.ga.SecondaryObjective;
 import generator.testcase.TestCase;
 import generator.testcase.TestChromosome;
 
@@ -82,6 +85,10 @@ public class TestSuiteChromosome extends AbstractTestSuiteChromosome<TestChromos
 		super();
 	}
 
+	public boolean localSearch(LocalSearchObjective<? extends Chromosome> objective) {
+		return false;
+	}
+
 	public TestChromosome addTest(TestCase test) {
 		TestChromosome c = new TestChromosome();
 		c.setTestCase(test);
@@ -111,7 +118,12 @@ public class TestSuiteChromosome extends AbstractTestSuiteChromosome<TestChromos
 	 */
 	@Override
 	public TestSuiteChromosome clone() {
-		return new TestSuiteChromosome(this);
+		return new TestSuiteChromosome();
+	}
+
+	@Override
+	public <T extends Chromosome> int compareSecondaryObjective(T o) {
+		return 0;
 	}
 
 	/**

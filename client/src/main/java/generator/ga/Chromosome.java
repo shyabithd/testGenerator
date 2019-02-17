@@ -17,8 +17,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
  */
-package generator;
+package generator.ga;
 
+import generator.Properties;
 import generator.utils.PublicCloneable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +94,10 @@ public abstract class Chromosome implements Comparable<Chromosome>, Serializable
 	// a molecule has taken. (field used by Chemical Reaction Optimization algorithms)
 	protected int numCollisions = 0;
 
-	/**
+    /** {@inheritDoc} */
+    public abstract boolean localSearch(LocalSearchObjective<? extends Chromosome> objective);
+
+    /**
 	 * {@inheritDoc}
 	 *
 	 * Create a deep copy of the chromosome

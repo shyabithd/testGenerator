@@ -19,31 +19,18 @@
  */
 package generator.testcase;
 
-import org.evosuite.Properties;
-import org.evosuite.coverage.mutation.Mutation;
-import org.evosuite.coverage.mutation.MutationExecutionResult;
-import org.evosuite.ga.Chromosome;
-import org.evosuite.ga.ConstructionFailedException;
-import org.evosuite.ga.SecondaryObjective;
-import org.evosuite.ga.localsearch.LocalSearchObjective;
-import org.evosuite.ga.operators.mutation.MutationHistory;
-import org.evosuite.runtime.javaee.injection.Injector;
-import org.evosuite.runtime.util.AtMostOnceLogger;
-import org.evosuite.setup.TestCluster;
-import org.evosuite.symbolic.BranchCondition;
-import org.evosuite.symbolic.ConcolicExecution;
-import org.evosuite.symbolic.ConcolicMutation;
-import org.evosuite.testcase.execution.ExecutionResult;
-import org.evosuite.testcase.localsearch.TestCaseLocalSearch;
-import org.evosuite.testcase.statements.FunctionalMockStatement;
-import org.evosuite.testcase.statements.PrimitiveStatement;
-import org.evosuite.testcase.statements.Statement;
-import org.evosuite.testcase.variable.VariableReference;
-import org.evosuite.testsuite.TestSuiteFitnessFunction;
-import org.evosuite.utils.Randomness;
-import org.evosuite.utils.generic.GenericAccessibleObject;
+import generator.Properties;
+import generator.ga.Chromosome;
+import generator.ga.ConstructionFailedException;
+import generator.ga.LocalSearchObjective;
+import generator.ga.SecondaryObjective;
+import generator.mutation.Mutation;
+import generator.mutation.MutationExecutionResult;
+import generator.testcase.statement.Statement;
+import generator.testsuite.TestSuiteFitnessFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import runtime.Randomness;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -65,19 +52,10 @@ public class TestChromosome extends ExecutableChromosome {
 	protected TestCase test = new DefaultTestCase();
 
 	/** To keep track of what has changed since last fitness evaluation */
-	protected MutationHistory<TestMutationHistoryEntry> mutationHistory = new MutationHistory<TestMutationHistoryEntry>();
 
 	/** Secondary objectives used during ranking */
 	private static final List<SecondaryObjective<?>> secondaryObjectives = new ArrayList<SecondaryObjective<?>>();
 
-	/**
-	 * <p>
-	 * setTestCase
-	 * </p>
-	 *
-	 * @param testCase
-	 *            a {@link org.evosuite.testcase.TestCase} object.
-	 */
 	public void setTestCase(TestCase testCase) {
 		test = testCase;
 		clearCachedResults();
@@ -85,13 +63,6 @@ public class TestChromosome extends ExecutableChromosome {
 		setChanged(true);
 	}
 
-	/**
-	 * <p>
-	 * getTestCase
-	 * </p>
-	 *
-	 * @return a {@link org.evosuite.testcase.TestCase} object.
-	 */
 	public TestCase getTestCase() {
 		return test;
 	}
@@ -128,12 +99,7 @@ public class TestChromosome extends ExecutableChromosome {
 		c.copyCachedResults(this);
 		c.setChanged(isChanged());
 		c.setLocalSearchApplied(hasLocalSearchBeenApplied());
-		if (Properties.LOCAL_SEARCH_SELECTIVE) {
-			for (TestMutationHistoryEntry mutation : mutationHistory) {
-				if(test.contains(mutation.getStatement()))
-					c.mutationHistory.addMutationEntry(mutation.clone(c.getTestCase()));
-			}
-		}
+
 		// c.mutationHistory.set(mutationHistory);
 		c.setNumberOfMutations(this.getNumberOfMutations());
 		c.setNumberOfEvaluations(this.getNumberOfEvaluations());
@@ -172,34 +138,9 @@ public class TestChromosome extends ExecutableChromosome {
 	 * Single point cross over
 	 */
 	@Override
-	public void crossOver(Chromosome other, int position1, int position2)
-	        throws ConstructionFailedException {
+	public void crossOver(Chromosome other, int position1, int position2) {
 		logger.debug("Crossover starting");
-		TestChromosome otherChromosome = (TestChromosome)other;
-		TestChromosome offspring = new TestChromosome();
-		TestFactory testFactory = TestFactory.getInstance();
 
-		for (int i = 0; i < position1; i++) {
-			offspring.test.addStatement(test.getStatement(i).clone(offspring.test));
-		}
-
-		for (int i = position2; i < other.size(); i++) {
-			GenericAccessibleObject<?> accessibleObject = otherChromosome.test.getStatement(i).getAccessibleObject();
-			if(accessibleObject != null) {
-				if (accessibleObject.getDeclaringClass().equals(Injector.class))
-					continue;
-				if(!ConstraintVerifier.isValidPositionForInsertion(accessibleObject, offspring.test, offspring.test.size())) {
-					continue;
-				}
-			}
-			testFactory.appendStatement(offspring.test,
-					otherChromosome.test.getStatement(i));
-		}
-		if (!Properties.CHECK_MAX_LENGTH
-				|| offspring.test.size() <= Properties.CHROMOSOME_LENGTH) {
-			test = offspring.test;
-			setChanged(true);
-		}
 	}
 
 	/**
@@ -230,62 +171,9 @@ public class TestChromosome extends ExecutableChromosome {
 		return test.hashCode();
 	}
 
-	public MutationHistory<TestMutationHistoryEntry> getMutationHistory() {
-		return mutationHistory;
-	}
-
-	public void clearMutationHistory() {
-		mutationHistory.clear();
-	}
-
 	public boolean hasRelevantMutations() {
 
-		if (mutationHistory.isEmpty()) {
-			logger.info("Mutation history is empty");
-			return false;
-		}
 
-		// Only apply local search up to the point where an exception was thrown
-		int lastPosition = test.size() - 1;
-		if (lastExecutionResult != null && !isChanged()) {
-			Integer lastPos = lastExecutionResult.getFirstPositionOfThrownException();
-			if (lastPos != null)
-				lastPosition = lastPos.intValue();
-		}
-
-		for (TestMutationHistoryEntry mutation : mutationHistory) {
-			logger.info("Considering: " + mutation.getMutationType());
-
-			if (mutation.getMutationType() != TestMutationHistoryEntry.TestMutation.DELETION
-			        && mutation.getStatement().getPosition() <= lastPosition) {
-				if (Properties.LOCAL_SEARCH_SELECTIVE_PRIMITIVES) {
-					if (!(mutation.getStatement() instanceof PrimitiveStatement<?>))
-						continue;
-				}
-				final Class<?> targetClass = Properties.getTargetClassAndDontInitialise();
-
-				if (!test.hasReferences(mutation.getStatement().getReturnValue())
-				        && !mutation.getStatement().getReturnClass().equals(targetClass)) {
-					continue;
-				}
-
-				int newPosition = -1;
-				for (int i = 0; i <= lastPosition; i++) {
-					if (test.getStatement(i) == mutation.getStatement()) {
-						newPosition = i;
-						break;
-					}
-				}
-
-				// Couldn't find statement, may have been deleted in other mutation?
-				assert (newPosition >= 0);
-				if (newPosition < 0) {
-					continue;
-				}
-
-				return true;
-			}
-		}
 		return false;
 	}
 
@@ -296,9 +184,7 @@ public class TestChromosome extends ExecutableChromosome {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean localSearch(LocalSearchObjective<? extends Chromosome> objective) {
-		TestCaseLocalSearch localSearch = TestCaseLocalSearch.selectTestCaseLocalSearch();
-		return localSearch.doSearch(this,
-		                            (LocalSearchObjective<TestChromosome>) objective);
+		return false;
 	}
 
 	/**
@@ -309,7 +195,6 @@ public class TestChromosome extends ExecutableChromosome {
 	@Override
 	public void mutate() {
 		boolean changed = false;
-		mutationHistory.clear();
 
 		if(mockChange()){
 			changed = true;
@@ -349,11 +234,6 @@ public class TestChromosome extends ExecutableChromosome {
 		for (Statement s : test) {
 			s.isValid();
 		}
-
-		// be sure that mutation did not break any constraint.
-		// if it happens, it means a bug in EvoSuite
-		assert ConstraintVerifier.verifyTest(test);
-		assert ! ConstraintVerifier.hasAnyOnlyForAssertionMethod(test);
 	}
 
 
@@ -370,38 +250,6 @@ public class TestChromosome extends ExecutableChromosome {
 
 		boolean changed = false;
 
-		for(int i=0; i<test.size(); i++){
-			Statement st = test.getStatement(i);
-			if(! (st instanceof FunctionalMockStatement)){
-				continue;
-			}
-
-			FunctionalMockStatement fms = (FunctionalMockStatement) st;
-			if(! fms.doesNeedToUpdateInputs()){
-				continue;
-			}
-
-			int preLength = test.size();
-
-			try {
-				List<Type> missing = fms.updateMockedMethods();
-				int pos = st.getPosition();
-				logger.debug("Generating parameters for mock call");
-				// Added 'null' as additional parameter - fix for @NotNull annotations issue on evo mailing list
-				List<VariableReference> refs = TestFactory.getInstance().satisfyParameters(test, null, missing,null, pos, 0, true, false,true);
-				fms.addMissingInputs(refs);
-			} catch (Exception e){
-				//shouldn't really happen because, in the worst case, we could create mocks for missing parameters
-				String msg = "Functional mock problem: "+e.toString();
-				AtMostOnceLogger.warn(logger, msg);
-				fms.fillWithNullRefs();
-				return changed;
-			}
-			changed = true;
-
-			int increase = test.size() - preLength;
-			i += increase;
-		}
 
 		return changed;
 	}
@@ -432,52 +280,10 @@ public class TestChromosome extends ExecutableChromosome {
 		}
 
 		boolean changed = false;
-		int lastMutableStatement = getLastMutatableStatement();
-		double pl = 1d / (lastMutableStatement + 1);
-		TestFactory testFactory = TestFactory.getInstance();
-
-		for (int num = lastMutableStatement; num >= 0; num--) {
-
-			if(num >= test.size()){
-				continue; //in case the delete remove more than one statement
-			}
-
-			// Each statement is deleted with probability 1/l
-			if (Randomness.nextDouble() <= pl) {
-				changed |= deleteStatement(testFactory, num);
-
-				if(changed){
-					assert ConstraintVerifier.verifyTest(test);
-				}
-			}
-		}
-
-		if(changed){
-			assert ConstraintVerifier.verifyTest(test);
-		}
 
 		return changed;
 	}
 
-	protected boolean deleteStatement(TestFactory testFactory, int num) {
-
-		try {
-
-            TestCase copy = test.clone();
-
-            mutationHistory.addMutationEntry(new TestMutationHistoryEntry(
-					TestMutationHistoryEntry.TestMutation.DELETION));
-            boolean modified = testFactory.deleteStatementGracefully(copy, num);
-
-            test = copy;
-           	return modified;
-
-        } catch (ConstructionFailedException e) {
-            logger.warn("Deletion of statement failed: " + test.getStatement(num).getCode());
-            logger.warn(test.toCode());
-			return false; //modifications were on copy
-        }
-	}
 
 	/**
 	 * Each statement is replaced with probability 1/length
@@ -488,61 +294,6 @@ public class TestChromosome extends ExecutableChromosome {
 		boolean changed = false;
 		int lastMutatableStatement = getLastMutatableStatement();
 		double pl = 1d / (lastMutatableStatement + 1);
-		TestFactory testFactory = TestFactory.getInstance();
-
-		if (Randomness.nextDouble() < Properties.CONCOLIC_MUTATION) {
-			try {
-				changed = mutationConcolic();
-			} catch (Exception exc) {
-				logger.warn("Encountered exception when trying to use concolic mutation: {}", exc.getMessage());
-				logger.debug("Detailed exception trace: ", exc);
-			}
-		}
-
-		if (!changed) {
-			for (int position = 0; position <= lastMutatableStatement; position++) {
-				if (Randomness.nextDouble() <= pl) {
-					assert (test.isValid());
-
-					Statement statement = test.getStatement(position);
-
-					if(statement.isReflectionStatement())
-						continue;
-
-					int oldDistance = statement.getReturnValue().getDistance();
-
-					//constraints are handled directly in the statement mutations
-					if (statement.mutate(test, testFactory)) {
-						changed = true;
-						mutationHistory.addMutationEntry(new TestMutationHistoryEntry(
-						        TestMutationHistoryEntry.TestMutation.CHANGE, statement));
-						assert (test.isValid());
-						assert ConstraintVerifier.verifyTest(test);
-
-					} else if (!statement.isAssignmentStatement() &&
-							ConstraintVerifier.canDelete(test,position)) {
-						//if a statement should not be deleted, then it cannot be either replaced by another one
-
-						int pos = statement.getPosition();
-						if (testFactory.changeRandomCall(test, statement)) {
-							changed = true;
-							mutationHistory.addMutationEntry(new TestMutationHistoryEntry(
-							        TestMutationHistoryEntry.TestMutation.CHANGE,
-							        test.getStatement(pos)));
-							assert ConstraintVerifier.verifyTest(test);
-						}
-						assert (test.isValid());
-					}
-
-					statement.getReturnValue().setDistance(oldDistance);
-					position = statement.getPosition(); // Might have changed due to mutation
-				}
-			}
-		}
-
-		if(changed){
-			assert ConstraintVerifier.verifyTest(test);
-		}
 
 		return changed;
 	}
@@ -557,22 +308,7 @@ public class TestChromosome extends ExecutableChromosome {
 		boolean changed = false;
 		final double ALPHA = Properties.P_STATEMENT_INSERTION; //0.5;
 		int count = 0;
-		TestFactory testFactory = TestFactory.getInstance();
 
-		while (Randomness.nextDouble() <= Math.pow(ALPHA, count)
-		        && (!Properties.CHECK_MAX_LENGTH || size() < Properties.CHROMOSOME_LENGTH)) {
-
-			count++;
-			// Insert at position as during initialization (i.e., using helper sequences)
-			int position = testFactory.insertRandomStatement(test, getLastMutatableStatement());
-
-			if (position >= 0 && position < test.size()) {
-				changed = true;
-				mutationHistory.addMutationEntry(new TestMutationHistoryEntry(
-				        TestMutationHistoryEntry.TestMutation.INSERTION,
-				        test.getStatement(position)));
-			}
-		}
 		return changed;
 	}
 
@@ -587,44 +323,8 @@ public class TestChromosome extends ExecutableChromosome {
 		// concolicExecution = new ConcolicExecution();
 
 		// Apply DSE to gather constraints
-		List<BranchCondition> branches = ConcolicExecution.getSymbolicPath(this);
-		logger.debug("Conditions: " + branches);
-		if (branches.isEmpty())
-			return false;
 
 		boolean mutated = false;
-		List<BranchCondition> targetBranches = new ArrayList<BranchCondition>();
-		for (BranchCondition branch : branches) {
-			if (TestCluster.isTargetClassName(branch.getClassName()))
-				targetBranches.add(branch);
-		}
-		// Select random branch
-		BranchCondition branch = null;
-		if (targetBranches.isEmpty())
-			branch = Randomness.choice(branches);
-		else
-			branch = Randomness.choice(targetBranches);
-
-		logger.debug("Trying to negate branch " + branch.getInstructionIndex()
-		        + " - have " + targetBranches.size() + "/" + branches.size()
-		        + " target branches");
-
-		// Try to solve negated constraint
-		TestCase newTest = ConcolicMutation.negateCondition(branches, branch, test);
-
-		// If successful, add resulting test to test suite
-		if (newTest != null) {
-			logger.debug("CONCOLIC: Created new test");
-			// logger.info(newTest.toCode());
-			// logger.info("Old test");
-			// logger.info(test.toCode());
-			this.test = newTest;
-			this.setChanged(true);
-			this.lastExecutionResult = null;
-		} else {
-			logger.debug("CONCOLIC: Did not create new test");
-		}
-
 		return mutated;
 	}
 
@@ -707,13 +407,7 @@ public class TestChromosome extends ExecutableChromosome {
 		}
 		return c;
 	}
-	/**
-	 * Add an additional secondary objective to the end of the list of
-	 * objectives
-	 *
-	 * @param objective
-	 *            a {@link org.evosuite.ga.SecondaryObjective} object.
-	 */
+
 	public static void addSecondaryObjective(SecondaryObjective<?> objective) {
 		secondaryObjectives.add(objective);
 	}
@@ -726,12 +420,6 @@ public class TestChromosome extends ExecutableChromosome {
 		Collections.reverse(secondaryObjectives);
 	}
 
-	/**
-	 * Remove secondary objective from list, if it is there
-	 *
-	 * @param objective
-	 *            a {@link org.evosuite.ga.SecondaryObjective} object.
-	 */
 	public static void removeSecondaryObjective(SecondaryObjective<?> objective) {
 		secondaryObjectives.remove(objective);
 	}

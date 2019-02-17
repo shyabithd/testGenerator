@@ -47,6 +47,12 @@ public abstract class PrimitiveStatement<T> extends AbstractStatement {
     /**
      * The value
      */
+
+    @Override
+    public generator.testcase.statement.Statement clone() {
+        return null;
+    }
+
     protected transient T value;
 
     public PrimitiveStatement(TestCase tc, VariableReference varRef, T value) {
