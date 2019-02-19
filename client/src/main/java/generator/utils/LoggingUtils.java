@@ -19,7 +19,6 @@
  */
 package generator.utils;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import generator.Properties;
