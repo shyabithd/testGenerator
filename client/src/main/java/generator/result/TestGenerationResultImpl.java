@@ -256,4 +256,6 @@ class TestGenerationResultImpl implements TestGenerationResult {
 		uncoveredMutants.addAll(mutants);
 	}
 
+    public void setTargetCoverage(FitnessFunction<?> key, Double value) {
+    }
 }
