@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
- * contributors
- *
- * This file is part of EvoSuite.
- *
- * EvoSuite is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3.0 of the License, or
- * (at your option) any later version.
- *
- * EvoSuite is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
- */
 package generator.classpath;
 
 import generator.Properties;
@@ -27,17 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.Scanner;
 
-/**
- * When running EvoSuite there are at least three different classpaths
- * to handle: (1) the one of the target project, (2) the one of EvoSuite
- * itself, and (3) the one of the starter of EvoSuite.
- * Note that (2) and (3) can indeed be different: eg if EvoSuite is
- * not run from command line, and rather run from Maven/Eclipse that
- * use their own classloaders.
- * 
- * @author arcuri
- *
- */
 public class ClassPathHandler {
 
 	private static Logger logger = LoggerFactory.getLogger(ClassPathHandler.class);
@@ -144,7 +114,7 @@ public class ClassPathHandler {
 					Scanner scanner = new Scanner(in);
 					line = scanner.nextLine();
 				} catch (Exception e) {
-					LoggingUtils.getEvoLogger().error("Error while processing " + file.getAbsolutePath() + " : " + e.getMessage());
+					LoggingUtils.getGeneratorLogger().error("Error while processing " + file.getAbsolutePath() + " : " + e.getMessage());
 				}
 			}
 

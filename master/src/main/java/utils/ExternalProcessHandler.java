@@ -1,24 +1,6 @@
-/**
- * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
- * contributors
- *
- * This file is part of EvoSuite.
- *
- * EvoSuite is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3.0 of the License, or
- * (at your option) any later version.
- *
- * EvoSuite is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
- */
 package utils;
 
+import generator.ClientProcess;
 import generator.result.TestGenerationResult;
 import generator.result.TestGenerationResultBuilder;
 import generator.rmi.service.ClientNodeRemote;
@@ -39,11 +21,6 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
-/*
- * this code should be used by the main master process.
- * 
- * FIXME: once RMI is stable tested, we ll need to remove all the TCP stuff, and refactor
- */
 
 public class ExternalProcessHandler {
 	/** Constant <code>logger</code> */
@@ -100,7 +77,7 @@ public class ExternalProcessHandler {
 				try {
 					clientRunningOnThread.join(ms - (System.currentTimeMillis() - start));
 					break;
-				} catch (InterruptedException e) {					
+				} catch (InterruptedException e) {
 				}
 			} else {
 				break;
@@ -117,7 +94,7 @@ public class ExternalProcessHandler {
 	 * <p>
 	 * setBaseDir
 	 * </p>
-	 * 
+	 *
 	 * @param base_dir
 	 *            a {@link String} object.
 	 */
@@ -261,7 +238,7 @@ public class ExternalProcessHandler {
 					 * NOTE: the handling of the parameters "-D" should be handled
 					 * directly in JUnit by setting the different values in Properties
 					 */
-					//ClientProcess.main(new String[0]);
+					ClientProcess.main(new String[0]);
 				}
 			};
 			clientRunningOnThread.setName("client");
@@ -330,7 +307,7 @@ public class ExternalProcessHandler {
 	 * @return a int.
 	 */
 	public int getServerPort() {
-		return 999;
+		return MasterServices.getInstance().getRegistryPort();
 	}
 
 	/**
@@ -342,7 +319,20 @@ public class ExternalProcessHandler {
 	 */
 	public int openServer() {
 
-		return -1;
+		boolean started = MasterServices.getInstance().startRegistry();
+		if(!started){
+			logger.error("Not possible to start RMI registry");
+			return -1;
+		}
+
+		try {
+			MasterServices.getInstance().registerServices();
+		} catch (RemoteException e) {
+			logger.error("Failed to start RMI services",e);
+			return -1;
+		}
+
+		return MasterServices.getInstance().getRegistryPort();
 	}
 
 	/**
@@ -500,14 +490,14 @@ public class ExternalProcessHandler {
 					}
 
 					if (message.equals(Messages.FINISHED_COMPUTATION)) {
-						LoggingUtils.getEvoLogger().info("* Computation finished");
+						LoggingUtils.getGeneratorLogger().info("* Computation finished");
 						read = false;
 						killProcess();
 						final_result = data;
 						latch.countDown();
 					} else if (message.equals(Messages.NEED_RESTART)) {
 						//now data represent the current generation
-						LoggingUtils.getEvoLogger().info("* Restarting client process");
+						LoggingUtils.getGeneratorLogger().info("* Restarting client process");
 						killProcess();
 						/*
 						 * TODO: this will need to be changed, to take into account
@@ -583,9 +573,9 @@ public class ExternalProcessHandler {
 					 * Or check in which state it is, and based on that decide if giving more time?
 					 */
 					logger.error("Class "+ Properties.TARGET_CLASS+". Clients have not finished yet, although a timeout occurred.\n"+MasterServices.getInstance().getMasterNode().getSummaryOfClientStatuses());
-				}				
+				}
 			}
-		} catch (InterruptedException e) {		
+		} catch (InterruptedException e) {
 		} catch(RemoteException e){
 
 			String msg = "Class "+ Properties.TARGET_CLASS+". Lost connection with clients.\n"+MasterServices.getInstance().getMasterNode().getSummaryOfClientStatuses();
@@ -600,7 +590,7 @@ public class ExternalProcessHandler {
 		}
 
 		killProcess();
-		LoggingUtils.getEvoLogger().info("* Computation finished");
+		LoggingUtils.getGeneratorLogger().info("* Computation finished");
 
 		return null; //TODO refactoring
 		/*

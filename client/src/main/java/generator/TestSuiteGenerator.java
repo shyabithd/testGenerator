@@ -1,7 +1,6 @@
 package generator;
 
 import generator.result.TestGenerationResult;
-import generator.testsuite.TestSuiteChromosome;
 import generator.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,7 @@ class TestSuiteGenerator {
 //
 //        postProcessTests(testCases);
 //        ClientServices.getInstance().getClientNode().publishPermissionStatistics();
-//        PermissionStatistics.getInstance().printStatistics(LoggingUtils.getEvoLogger());
+//        PermissionStatistics.getInstance().printStatistics(LoggingUtils.getGeneratorLogger());
 //
 //        // progressMonitor.setCurrentPhase("Writing JUnit test cases");
 //        TestGenerationResult result = writeJUnitTestsAndCreateResult(testCases);
@@ -31,8 +30,8 @@ class TestSuiteGenerator {
 //         */
 //        ClientServices.getInstance().getClientNode().changeState(ClientState.WRITING_STATISTICS);
 
-        LoggingUtils.getEvoLogger().info("* Done!");
-        LoggingUtils.getEvoLogger().info("");
+        LoggingUtils.getGeneratorLogger().info("* Done!");
+        LoggingUtils.getGeneratorLogger().info("");
 
         return null;
     }

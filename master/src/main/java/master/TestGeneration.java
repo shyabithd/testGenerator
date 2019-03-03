@@ -1,5 +1,7 @@
 package master;
 
+import executionmode.Help;
+import generator.ClientProcess;
 import generator.Properties;
 import generator.classpath.ClassPathHandler;
 import generator.classpath.ResourceList;
@@ -16,7 +18,6 @@ import utils.JarPathing;
 import utils.JavaExecCmdUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -29,7 +30,7 @@ public class TestGeneration {
         Properties.Strategy strategy = getChosenStrategy(javaOpts, line);
 
         if (strategy == null) {
-            strategy = Properties.Strategy.EVOSUITE;
+            strategy = Properties.Strategy.TESTSUITE;
         }
 
         List<List<TestGenerationResult>> results = new ArrayList<List<TestGenerationResult>>();
@@ -40,13 +41,18 @@ public class TestGeneration {
 
         String cp = ClassPathHandler.getInstance().getTargetProjectClasspath();
         if(cp==null || cp.isEmpty()){
-            LoggingUtils.getEvoLogger().error("No classpath has been defined for the target project.\nOn the command line you can set it with the -projectCP option\n");
+            LoggingUtils.getGeneratorLogger().error("No classpath has been defined for the target project.\nOn the command line you can set it with the -projectCP option\n");
             return results;
         }
 
 
         if (line.hasOption("class")) {
             results.addAll(generateTests(strategy, line.getOptionValue("class"), javaOpts));
+        } else {
+            LoggingUtils.getGeneratorLogger().error(
+                    "Please specify either target class ('-class' option), prefix ('-prefix' option), or " +
+                            "classpath entry ('-target' option)\n");
+            Help.execute(options);
         }
         return results;
     }
@@ -57,10 +63,10 @@ public class TestGeneration {
             return true;
         }
 
-        LoggingUtils.getEvoLogger().info("* Unknown class: " + target +
+        LoggingUtils.getGeneratorLogger().info("* Unknown class: " + target +
                 ". Be sure its full qualifying name  is correct and the classpath is properly set with '-projectCP'");
 
-        return false;
+        return true;
     }
 
     private static void handleClassPath(List<String> cmdLine) {
@@ -91,7 +97,7 @@ public class TestGeneration {
     private static List<List<TestGenerationResult>> generateTests(Properties.Strategy strategy, String target,
                                                                   List<String> args) {
 
-        LoggingUtils.getEvoLogger().info("* Going to generate test cases for class: "+target);
+        LoggingUtils.getGeneratorLogger().info("* Going to generate test cases for class: "+target);
 
         if (!findTargetClass(target)) {
             return Arrays.asList(Arrays.asList(new TestGenerationResult[]{}));
@@ -147,7 +153,7 @@ public class TestGeneration {
             cmdLine.add("-Xdebug");
             cmdLine.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address="
                     + Properties.PORT);
-            LoggingUtils.getEvoLogger().info("* Waiting for remote debugger to connect on port "
+            LoggingUtils.getGeneratorLogger().info("* Waiting for remote debugger to connect on port "
                     + Properties.PORT + "..."); // TODO find the right
             // place for this
         }
@@ -156,10 +162,10 @@ public class TestGeneration {
             // enabling debugging mode to e.g. connect the eclipse remote debugger to the given port
             File agentFile = new File(Properties.PROFILE);
             if(!agentFile.exists()) {
-                LoggingUtils.getEvoLogger().info("* Error: "+Properties.PROFILE+" not found");
+                LoggingUtils.getGeneratorLogger().info("* Error: "+Properties.PROFILE+" not found");
             } else {
                 cmdLine.add("-agentpath:" + Properties.PROFILE);
-                LoggingUtils.getEvoLogger().info("* Using profiling agent " + Properties.PROFILE);
+                LoggingUtils.getGeneratorLogger().info("* Using profiling agent " + Properties.PROFILE);
             }
         }
 
@@ -183,7 +189,7 @@ public class TestGeneration {
         }
 
         switch (strategy) {
-            case EVOSUITE:
+            case TESTSUITE:
                 cmdLine.add("-Dstrategy=EvoSuite");
                 break;
             case ONEBRANCH:
@@ -218,7 +224,7 @@ public class TestGeneration {
             cmdLine.add("-DPROJECT_PREFIX=" + Properties.PROJECT_PREFIX);
         }
 
-        cmdLine.add("");
+        cmdLine.add(ClientProcess.class.getName());
 
         /*
          * TODO: here we start the client with several properties that are set through -D. These properties are not visible to the master process (ie
@@ -357,7 +363,7 @@ public class TestGeneration {
 
             handler.killProcess();
         } else {
-            LoggingUtils.getEvoLogger().info("* Could not connect to client process");
+            LoggingUtils.getGeneratorLogger().info("* Could not connect to client process");
         }
 
         boolean hasFailed = false;
@@ -414,7 +420,7 @@ public class TestGeneration {
         } else if (line.hasOption("generateTests")) {
                 strategy = Properties.Strategy.ONEBRANCH;
         } else if (line.hasOption("generateSuite")) {
-            strategy = Properties.Strategy.EVOSUITE;
+            strategy = Properties.Strategy.TESTSUITE;
         } else if (line.hasOption("generateRandom")) {
             strategy = Properties.Strategy.RANDOM;
         } else if (line.hasOption("regressionSuite")) {

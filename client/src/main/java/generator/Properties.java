@@ -1,28 +1,8 @@
-/**
- * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
- * contributors
- *
- * This file is part of EvoSuite.
- *
- * EvoSuite is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3.0 of the License, or
- * (at your option) any later version.
- *
- * EvoSuite is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
- */
 package generator;
 
 import generator.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import runtime.LoopCounter;
 import runtime.RuntimeSettings;
 
 import java.io.File;
@@ -36,19 +16,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Central property repository. All global parameters of EvoSuite should be
- * declared as fields here, using the appropriate annotation. Access is possible
- * directly via the fields, or with getter/setter methods.
- *
- * @author Gordon Fraser
- */
 public class Properties {
 
 	private final static Logger logger = LoggerFactory.getLogger(Properties.class);
@@ -1507,11 +1479,11 @@ public class Properties {
 	
 	
 	public enum Strategy {
-	    ONEBRANCH, EVOSUITE, RANDOM, RANDOM_FIXED, ENTBUG, REGRESSION, MOSUITE, DSE, NOVELTY
+	    ONEBRANCH, TESTSUITE, RANDOM, RANDOM_FIXED, ENTBUG, REGRESSION, MOSUITE, DSE, NOVELTY
 	}
 
 	@Parameter(key = "strategy", group = "Runtime", description = "Which mode to use")
-	public static Strategy STRATEGY = Strategy.EVOSUITE;
+	public static Strategy STRATEGY = Strategy.TESTSUITE;
 
 	@Parameter(key = "process_communication_port", group = "Runtime", description = "Port at which the communication with the external process is done")
 	public static int PROCESS_COMMUNICATION_PORT = -1;
@@ -1647,7 +1619,7 @@ public class Properties {
 				properties.load(in);
 
 				if (!silent)
-					LoggingUtils.getEvoLogger().info(
+					LoggingUtils.getGeneratorLogger().info(
 							"* Properties loaded from "
 									+ propertiesFile.getAbsolutePath());
 			} else {
@@ -1657,7 +1629,7 @@ public class Properties {
 				if (in != null) {
 					properties.load(in);
 					if (!silent)
-						LoggingUtils.getEvoLogger().info(
+						LoggingUtils.getGeneratorLogger().info(
 								"* Properties loaded from "
 										+ this.getClass().getClassLoader()
 												.getResource(propertiesPath)
@@ -2262,7 +2234,7 @@ public class Properties {
 							CLASS_PREFIX.indexOf("."));
 				else
 					PROJECT_PREFIX = CLASS_PREFIX;
-				// LoggingUtils.getEvoLogger().info("* Using project prefix: "
+				// LoggingUtils.getGeneratorLogger().info("* Using project prefix: "
 				// + PROJECT_PREFIX);
 			}
 		}

@@ -3,9 +3,7 @@ package utils;
 import java.io.File;
 import java.util.Optional;
 
-/**
- * Created by wildfly.ua@gmail.com for EvoSuite project (https://github.com/EvoSuite/evosuite)
- */
+
 public class JavaExecCmdUtil {
 
   /**

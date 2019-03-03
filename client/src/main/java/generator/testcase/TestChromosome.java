@@ -1,27 +1,7 @@
-/**
- * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
- * contributors
- *
- * This file is part of EvoSuite.
- *
- * EvoSuite is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3.0 of the License, or
- * (at your option) any later version.
- *
- * EvoSuite is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
- */
 package generator.testcase;
 
 import generator.Properties;
 import generator.ga.Chromosome;
-import generator.ga.ConstructionFailedException;
 import generator.ga.LocalSearchObjective;
 import generator.ga.SecondaryObjective;
 import generator.mutation.Mutation;
@@ -30,18 +10,12 @@ import generator.testcase.statement.Statement;
 import generator.testsuite.TestSuiteFitnessFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import runtime.Randomness;
+import generator.utils.Randomness;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Chromosome representation of test cases
- *
- * @author Gordon Fraser
- */
 public class TestChromosome extends ExecutableChromosome {
 
 	private static final long serialVersionUID = 7532366007973252782L;

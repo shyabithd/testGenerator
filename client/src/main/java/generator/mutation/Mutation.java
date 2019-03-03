@@ -22,15 +22,6 @@
  */
 package generator.mutation;
 
-import java.util.Set;
-
-/**
- * <p>
- * Mutation class.
- * </p>
- * 
- * @author Gordon Fraser
- */
 public class Mutation implements Comparable<Mutation> {
 
 	private final int id;

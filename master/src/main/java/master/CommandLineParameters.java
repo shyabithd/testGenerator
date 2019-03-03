@@ -1,25 +1,7 @@
-/**
- * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
- * contributors
- *
- * This file is part of EvoSuite.
- *
- * EvoSuite is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3.0 of the License, or
- * (at your option) any later version.
- *
- * EvoSuite is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
- */
 package master;
 
 import generator.Properties;
+import generator.classpath.ClassPathHandler;
 import generator.utils.LoggingUtils;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -31,11 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * This class is used to define and validate the input parameters passed by console
- * @author arcuri
- *
- */
 public class CommandLineParameters {
 
 	/**
@@ -153,7 +130,7 @@ public class CommandLineParameters {
         for (String propertyName : properties.stringPropertyNames()) {
 
             if (!propertyNames.contains(propertyName)) {
-				LoggingUtils.getEvoLogger().error("* Unknown property: " + propertyName);
+				LoggingUtils.getGeneratorLogger().error("* Unknown property: " + propertyName);
 				throw new Error("Unknown property: " + propertyName);
 			}
 
@@ -178,28 +155,39 @@ public class CommandLineParameters {
 				DCP = properties.getProperty(propertyName);
 			}
 		}
-		
+
 		if(line.hasOption("projectCP") && DCP!=null){
 			throw new IllegalArgumentException("Ambiguous classpath: both -projectCP and -DCP are defined");
 		}
 
 		String[] cpEntries = null;
-				
+
 		if (line.hasOption("projectCP")) {
 			cpEntries = line.getOptionValue("projectCP").split(File.pathSeparator);
-		} else if (DCP != null) { 
+		} else if (DCP != null) {
 			cpEntries = DCP.split(File.pathSeparator);
+		}
+
+		if(cpEntries != null){
+			ClassPathHandler.getInstance().changeTargetClassPath(cpEntries);
 		}
 
 		if (line.hasOption("target")) {
 			String target = line.getOptionValue("target");
 
-			/* 
+			/*
 			 * let's just add the target automatically to the classpath.
 			 * This is useful for when we do not want to specify the classpath,
 			 * and so just typing '-target' on command line
-			 * 
-			 */ 
+			 *
+			 */
+			ClassPathHandler.getInstance().addElementToTargetProjectClassPath(target);
+		}
+
+		if (line.hasOption("evosuiteCP")) {
+			String entry = line.getOptionValue("evosuiteCP");
+			String[] entries = entry.split(File.pathSeparator);
+			ClassPathHandler.getInstance().setEvoSuiteClassPath(entries);
 		}
 	}
 	

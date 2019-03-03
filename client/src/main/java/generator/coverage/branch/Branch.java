@@ -1,50 +1,7 @@
-/**
- * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
- * contributors
- *
- * This file is part of EvoSuite.
- *
- * EvoSuite is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3.0 of the License, or
- * (at your option) any later version.
- *
- * EvoSuite is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
- */
 package generator.coverage.branch;
 
 import java.io.Serializable;
 
-/**
- * An object of this class corresponds to a Branch inside the class under test.
- * 
- * <p>
- * Branches are created by the {@code CFGMethodAdapter} via the {@code BranchPool}. Each Branch
- * holds its corresponding {@code BytecodeInstruction} from the {@code RawControlFlowGraph} and
- * is associated with a unique {@code actualBranchId}.
- * 
- * <p>
- * A Branch can either come from a jump instruction, as defined in
- * {@code BytecodeInstruction.isBranch()} - which will be called normal branches - or it
- * can be associated with a case: of a switch statement as defined in
- * {@code BytecodeInstruction.isSwitch()} - which will be called switch case branches.
- * Only {@code BytecodeInstructions} satisfying {@code BytecodeInstruction.isActualbranch()} are
- * expected to be associated with a {@code Branch} object.
- * 
- * <p>
- * For SWITCH statements each case <key>: block corresponds to a {@code Branch} that can
- * be created by constructing a {@code Branch} with the SWITCH statement and the <key>
- * as the targetCaseValue. The default: case of switch statement can also be
- * modeled this way - it has the {@code targetCaseValue} set to {@code null}.
- * 
- * @author Andre Mis
- */
 public class Branch implements Serializable, Comparable<Branch> {
 
 	private static final long serialVersionUID = -4732587925060748263L;

@@ -22,17 +22,6 @@ package runtime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * In some cases, we can end up with infinite loops: eg due to a bug, a seeded mutation,
- * a very large input parameter, or simply it is the expected behavior of the CUT.
- * In such cases, we will every time hit the test timeout, which will hinder the search.
- *
- * <p>
- * Therefore, for each loop in the instrumented CUTs, we can have a limit, and throw an exception
- * if too many iterations have occurred
- *
- * Created by Andrea Arcuri on 29/03/15.
- */
 public class LoopCounter {
 
     private static final LoopCounter singleton = new LoopCounter();

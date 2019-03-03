@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
- * contributors
- *
- * This file is part of EvoSuite.
- *
- * EvoSuite is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3.0 of the License, or
- * (at your option) any later version.
- *
- * EvoSuite is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
- */
 package generator.utils;
 
 import ch.qos.logback.classic.LoggerContext;
@@ -36,11 +17,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * this class is used to get help on some customization of logging facility
- * 
- * @author arcuri
- */
 public class LoggingUtils {
 
 	private static final Logger logger = LoggerFactory.getLogger(LoggingUtils.class);
@@ -52,7 +28,7 @@ public class LoggingUtils {
 
 	public static final String USE_DIFFERENT_LOGGING_XML_PARAMETER = "use_different_logback";
 
-	private static final String EVO_LOGGER = "evo_logger";
+	private static final String GENERATOR_LOGGER = "logger";
 
 	/** Constant <code>latestOut</code> */
 	protected static PrintStream latestOut = null;
@@ -104,13 +80,13 @@ public class LoggingUtils {
 
 	/**
 	 * <p>
-	 * getEvoLogger
+	 * getGeneratorLogger
 	 * </p>
 	 * 
 	 * @return a {@link org.slf4j.Logger} object.
 	 */
-	public static Logger getEvoLogger() {
-		return LoggerFactory.getLogger(EVO_LOGGER);
+	public static Logger getGeneratorLogger() {
+		return LoggerFactory.getLogger(GENERATOR_LOGGER);
 	}
 
 	/**
