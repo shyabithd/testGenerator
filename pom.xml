@@ -31,7 +31,7 @@
                 </configuration>
             </plugin>
 
-            <!-- we need at least Maven 3.1 due to special features in EvoSuite Maven Plugin -->
+            <!-- we need at least Maven 3.1 due to special features in TestSuite Maven Plugin -->
             <plugin>
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -79,7 +79,7 @@
                     <programs>
                         <program>
                             <mainClass>master.TestSuite</mainClass>
-                            <name>EvoSuite</name>
+                            <name>TestSuite</name>
                             <commandLineArguments>
                                 <!-- Add two predefined command line arguments <commandLineArgument>arg1</commandLineArgument>
                                      <commandLineArgument>arg2</commandLineArgument> -->
@@ -420,7 +420,7 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <!-- Unfortunately, recent versions (eg 1.1.6 and 1.1.7) hang
-                on Windows, making EvoSuite unusable. If want to try to
+                on Windows, making TestSuite unusable. If want to try to
                 update it (eg after 1.1.7), need to make sure tests (eg,
                 JobExecutorIntTest and all the Maven ones) work fine
                 on Windows -->

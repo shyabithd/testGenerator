@@ -1,6 +1,7 @@
 package generator.testcase.variable;
 
 import generator.testcase.TestCase;
+import generator.utils.GenericClass;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;
@@ -23,7 +24,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 * @return a int.
 	 */
 	public int getDistance();
-
+	public GenericClass getGenericClass();
 	/**
 	 * Set the distance metric
 	 * 

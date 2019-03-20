@@ -24,7 +24,7 @@ public class TimeController {
 
 	private static final Logger logger = LoggerFactory.getLogger(TimeController.class);
 	
-	private static final TimeController singleton = new TimeController();
+	private static TimeController singleton;
 
 	/**
 	 *  The current state of the client
@@ -127,6 +127,9 @@ public class TimeController {
 	 * @return
 	 */
 	public static TimeController getInstance(){
+		if (singleton == null) {
+			singleton = new TimeController();
+		}
 		return singleton;
 	}
 

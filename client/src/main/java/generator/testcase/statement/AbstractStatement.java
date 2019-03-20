@@ -1,9 +1,9 @@
 package generator.testcase.statement;
 
-import generator.Properties;
 import generator.assertion.Assertion;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.TestCase;
+import generator.testcase.variable.VariableReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +22,9 @@ public abstract class AbstractStatement implements Statement, Serializable {
 	 * method.
 	 * 
 	 **/
+
+	protected VariableReference retval;
+
 	protected abstract class Executer {
 		/**
 		 * The execute statement should, when called only execute exactly one

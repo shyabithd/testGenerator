@@ -2,6 +2,7 @@ package generator.testcase.statement;
 
 import generator.Properties;
 import generator.assertion.Assertion;
+import generator.testcase.Scope;
 import generator.testcase.TestCase;
 import generator.testcase.variable.VariableReference;
 
@@ -62,6 +63,27 @@ public class ArrayStatement extends AbstractStatement {
 	public Class<?> getReturnClass() {
 		return null;
 	}
+
+	@Override
+	public Set<VariableReference> getVariableReferences() {
+		return null;
+	}
+
+	@Override
+	public VariableReference getReturnValue() {
+		return null;
+	}
+
+	@Override
+	public void setRetval(VariableReference newRetVal) {
+
+	}
+
+	@Override
+	public Throwable execute(Scope scope, PrintStream out) throws InvocationTargetException, IllegalArgumentException, IllegalAccessException, InstantiationException {
+		return null;
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public final Statement clone() {

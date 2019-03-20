@@ -1,7 +1,9 @@
 package generator.testcase.statement;
 
 import generator.assertion.Assertion;
+import generator.testcase.Scope;
 import generator.testcase.TestCase;
+import generator.testcase.variable.VariableReference;
 
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
@@ -27,6 +29,12 @@ public interface Statement {
 	 */
 	public void addComment(String comment);
 
+	public Set<VariableReference> getVariableReferences();
+	public VariableReference getReturnValue();
+	public void setRetval(VariableReference newRetVal);
+	public Throwable execute(Scope scope, PrintStream out)
+			throws InvocationTargetException, IllegalArgumentException,
+			IllegalAccessException, InstantiationException;
 	/**
 	 * Class instances are bound to a class loader - if we want to reexecute a
 	 * test on a different classloader we need to be able to change the class of

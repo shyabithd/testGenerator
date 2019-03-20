@@ -68,21 +68,8 @@ public class RuntimeSettings {
      */
     public static boolean useSeparateClassLoader = true;
 
-    /**
-     * If the class is serializable, then doing any change (adding hashCode, static reset, etc)
-     * will change the serialVersionUID if it is not defined in the class.
-     * Hence, if it is not defined, we have to define it to
-     * avoid problems in serialising the class, as reading Master will not do instrumentation.
-     * The serialVersionUID HAS to be the same as the un-instrumented class.
-     * However, this should not be done in the final JUnit, as it leads to a lot of issues
-     * with classloaders
-     */
     public static boolean applyUIDTransformation = false;
 
-
-    /**
-     * Used internally in EvoSuite when its regression suites are run
-     */
     public static boolean isRunningASystemTest = false;
 
     public static boolean isUsingAnyMocking() {

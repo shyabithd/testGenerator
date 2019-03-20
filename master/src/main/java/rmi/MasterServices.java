@@ -1,5 +1,7 @@
 package rmi;
 
+import generator.rmi.UtilsRMI;
+import generator.rmi.service.MasterNodeRemote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rmi.service.MasterNodeImpl;
@@ -57,7 +59,7 @@ public class MasterServices {
 		for(int i=0; i<TRIES; i++){
 			try {
 				int candidatePort = port+i;								
-				//UtilsRMI.ensureRegistryOnLoopbackAddress();
+				UtilsRMI.ensureRegistryOnLoopbackAddress();
 				
 				registry = LocateRegistry.createRegistry(candidatePort);
 				registryPort = candidatePort;
@@ -80,6 +82,8 @@ public class MasterServices {
 	
 	public void registerServices() throws RemoteException{
 		masterNode = new MasterNodeImpl(registry);
+		MasterNodeRemote stub = (MasterNodeRemote) UtilsRMI.exportObject(masterNode);
+		registry.rebind(MasterNodeRemote.RMI_SERVICE_NAME, stub);
 	}
 	
 

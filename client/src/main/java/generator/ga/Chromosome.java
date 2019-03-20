@@ -285,30 +285,13 @@ public abstract class Chromosome implements Comparable<Chromosome>, Serializable
 	 */
 	public abstract void crossOver(Chromosome other, int position1, int position2);
 
-	/**
-	 * Apply the local search
-	 * 
-	 * @param objective
-	 *            a {@link org.evosuite.ga.LocalSearchObjective} object.
-	 */
+
 	// public void applyAdaptiveLocalSearch(LocalSearchObjective<? extends
 	// Chromosome> objective) {
 	// // No-op
 	// }
 
-	/**
-	 * Apply DSE
-	 * 
-	 * @param algorithm
-	 *            a {@link org.evosuite.ga.GeneticAlgorithm} object.
-	 */
-	// public abstract boolean applyDSE(GeneticAlgorithm<?> algorithm);
 
-	/**
-	 * Return length of individual
-	 * 
-	 * @return a int.
-	 */
 	public abstract int size();
 
 	/**

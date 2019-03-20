@@ -1,6 +1,7 @@
 package generator.rmi.service;
 
 import generator.Properties;
+import generator.TestSuiteGenerator;
 import generator.TimeController;
 import generator.ga.Chromosome;
 import generator.result.TestGenerationResult;
@@ -100,8 +101,8 @@ public class ClientNodeImpl implements ClientNodeLocal, ClientNodeRemote {
 
 				try {
 					// Starting a new search
-					//TestSuiteGenerator generator = new TestSuiteGenerator();
-					//results.add(generator.generateTestSuite());
+					TestSuiteGenerator generator = new TestSuiteGenerator();
+					results.add(generator.generateTestSuite());
 					// TODO: Why?
 					// GeneticAlgorithm<?> ga = generator.getEmployedGeneticAlgorithm();
 

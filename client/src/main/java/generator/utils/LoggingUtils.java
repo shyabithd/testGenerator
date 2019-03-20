@@ -1,16 +1,16 @@
 package generator.utils;
 
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.util.StatusPrinter;
 import generator.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.Inputs;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Callable;
@@ -28,7 +28,7 @@ public class LoggingUtils {
 
 	public static final String USE_DIFFERENT_LOGGING_XML_PARAMETER = "use_different_logback";
 
-	private static final String GENERATOR_LOGGER = "logger";
+	private static final String GENERATOR_LOGGER = "evo_logger";
 
 	/** Constant <code>latestOut</code> */
 	protected static PrintStream latestOut = null;
@@ -261,8 +261,55 @@ public class LoggingUtils {
 		// TODO: Find better way to find out the default configuration
 		return context.getName().equals("default");
 	}
-	
 
+	public static boolean loadLogbackForEvoSuite() {
+		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+		boolean isOK = true;
+
+		// Only overrule default configurations
+		if (isDefaultLoggingConfiguration(context)) {
+			isOK = changeLogbackFile(getLogbackFileName());
+			StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+		}
+		return isOK;
+	}
+
+	public static boolean changeLogbackFile(String resourceFilePath){
+		Inputs.checkNull(resourceFilePath);
+		if(!resourceFilePath.endsWith(".xml")){
+			throw new IllegalArgumentException("Logback file name does not terminate with '.xml'");
+		}
+
+		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		try {
+			JoranConfigurator configurator = new JoranConfigurator();
+			configurator.setContext(context);
+			final String xmlFileName = resourceFilePath;
+			InputStream f = null;
+			if (LoggingUtils.class.getClassLoader() != null) {
+				f = LoggingUtils.class.getClassLoader().getResourceAsStream(xmlFileName);
+			} else {
+				// If the classloader is null, then that means EvoSuite.class was loaded
+				// with the bootstrap classloader, so let's try that as well
+				f = ClassLoader.getSystemClassLoader().getResourceAsStream(xmlFileName);
+			}
+			if (f == null) {
+				String msg = xmlFileName + " not found on classpath";
+				System.err.println(msg);
+				logger.error(msg);
+				return false;
+			} else {
+				context.reset();
+				configurator.doConfigure(f);
+			}
+		} catch (JoranException je) {
+			// StatusPrinter will handle this
+			return false;
+		}
+
+		return true;
+	}
 
 	public static String getLogbackFileName() {
 		return System.getProperty(USE_DIFFERENT_LOGGING_XML_PARAMETER, "logback-evosuite.xml");

@@ -3,6 +3,7 @@ package master;
 import executionmode.Help;
 import generator.ClientProcess;
 import generator.Properties;
+import generator.TimeController;
 import generator.classpath.ClassPathHandler;
 import generator.classpath.ResourceList;
 import generator.result.TestGenerationResult;
@@ -190,7 +191,7 @@ public class TestGeneration {
 
         switch (strategy) {
             case TESTSUITE:
-                cmdLine.add("-Dstrategy=EvoSuite");
+                cmdLine.add("-Dstrategy=TestSuite");
                 break;
             case ONEBRANCH:
                 cmdLine.add("-Dstrategy=OneBranch");
@@ -315,6 +316,7 @@ public class TestGeneration {
             int logPort = logUtils.getLogServerPort(); //
             cmdLine.add(1, "-Dmaster_log_port=" + logPort);
             cmdLine.add(1, "-Devosuite.log.appender=CLIENT");
+            cmdLine.add("-D" + LoggingUtils.USE_DIFFERENT_LOGGING_XML_PARAMETER + "=logback-ctg-entry.xml");
         }
 
         String[] newArgs = cmdLine.toArray(new String[cmdLine.size()]);
@@ -337,10 +339,6 @@ public class TestGeneration {
                 logger.error("Not possible to access to clients. Clients' state: "+handler.getProcessState() +
                         ". Master registry port: "+MasterServices.getInstance().getRegistryPort());
             } else {
-                /*
-                 * The clients have started, and connected back to Master.
-                 * So now we just need to tell them to start a search
-                 */
                 for (ClientNodeRemote client : clients) {
                     try {
                         client.startNewSearch();
@@ -349,7 +347,7 @@ public class TestGeneration {
                     }
                 }
 
-                int time = 1;//TimeController.getInstance().calculateForHowLongClientWillRunInSeconds();
+                int time = TimeController.getInstance().calculateForHowLongClientWillRunInSeconds();
                 handler.waitForResult(time * 1000);
                 try {
                     Thread.sleep(100);

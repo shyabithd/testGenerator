@@ -114,7 +114,7 @@ public class ExternalProcessHandler {
 	public boolean startProcess(String[] command) {
 
 
-		logger.debug("Going to start process with command: " + Arrays.toString(command).replace(",", " "));
+		//logger.debug("Going to start process with command: " + Arrays.toString(command).replace(",", " "));
 
 		List<String> formatted = new LinkedList<>();
 		for(String s : command){

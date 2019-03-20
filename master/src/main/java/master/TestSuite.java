@@ -16,6 +16,10 @@ import java.util.List;
 
 public class TestSuite {
 
+    static {
+        LoggingUtils.loadLogbackForEvoSuite();
+    }
+
     private static Logger logger = LoggerFactory.getLogger(TestSuite.class);
 
     private static String separator = System.getProperty("file.separator");
