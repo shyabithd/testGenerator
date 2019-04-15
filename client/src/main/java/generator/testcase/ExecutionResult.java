@@ -1,5 +1,8 @@
 package generator.testcase;
 
+import generator.assertion.OutputTrace;
+import generator.coverage.input.InputCoverageGoal;
+import generator.coverage.output.OutputCoverageGoal;
 import generator.mutation.Mutation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +21,7 @@ public class ExecutionResult implements Cloneable {
 
 	/** Map statement number to raised exception */
 	protected Map<Integer, Throwable> exceptions = new HashMap<Integer, Throwable>();
-
+	private Map<Integer, Set<InputCoverageGoal>> inputGoals = new LinkedHashMap<>();
 	/** Record for each exception if it was explicitly thrown 
 	 * 
 	 * <p>
@@ -37,7 +40,10 @@ public class ExecutionResult implements Cloneable {
 
 	/** Set of System properties that were read during test execution */
 	protected Set<String> readProperties;
-	
+	protected ExecutionTrace trace;
+	protected final Map<Class<?>, OutputTrace<?>> traces = new HashMap<Class<?>, OutputTrace<?>>();
+
+	private Map<Integer, Set<OutputCoverageGoal>> outputGoals = new LinkedHashMap<>();
 	/**
 	 * Keep track of whether any System property was written
 	 */
@@ -235,6 +241,12 @@ public class ExecutionResult implements Cloneable {
 	 * 
 	 * @return a boolean.
 	 */
+	public ExecutionTrace getTrace() { return null; }
+	public OutputTrace getTrace(Class<?> clasName) { return null; }
+	public Map<Integer, Set<InputCoverageGoal>> getInputGoals() {
+		return inputGoals;
+	}
+
 	public boolean hasUndeclaredException() {
 		if (test == null)
 			return false;
@@ -325,6 +337,29 @@ public class ExecutionResult implements Cloneable {
 
 	public void setTest(TestCase tc) {
 		this.test = tc;
+	}
+
+	public void setInputGoals(Map<Integer, Set<InputCoverageGoal>> coveredGoals) {
+		inputGoals.putAll(coveredGoals);
+	}
+
+	public Map<Integer, Set<OutputCoverageGoal>> getOutputGoals() {
+		return outputGoals;
+	}
+
+	public void setOutputGoals(Map<Integer, Set<OutputCoverageGoal>> coveredGoals) {
+		outputGoals.putAll(coveredGoals);
+	}
+
+	public void setTrace(ExecutionTrace trace) throws IllegalArgumentException{
+		if(trace==null){
+			throw new IllegalArgumentException("Trace cannot be null");
+		}
+		this.trace = trace;
+	}
+
+	public void setTrace(OutputTrace<?> trace, Class<?> clazz) {
+		traces.put(clazz, trace);
 	}
 
 }

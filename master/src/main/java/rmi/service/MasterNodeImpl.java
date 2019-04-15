@@ -1,5 +1,6 @@
 package rmi.service;
 
+import generator.Listener;
 import generator.ga.Chromosome;
 import generator.result.TestGenerationResult;
 import generator.rmi.service.ClientNodeRemote;
@@ -7,7 +8,6 @@ import generator.rmi.service.ClientState;
 import generator.rmi.service.ClientStateInformation;
 import generator.rmi.service.MasterNodeRemote;
 import generator.statistics.RuntimeVariable;
-import generator.utils.Listener;
 import generator.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

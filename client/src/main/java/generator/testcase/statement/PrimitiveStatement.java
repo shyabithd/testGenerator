@@ -1,5 +1,6 @@
 package generator.testcase.statement;
 
+import generator.ClassReader;
 import generator.testcase.TestCase;
 import generator.testcase.variable.VariableReference;
 import generator.utils.GenericClass;
@@ -31,7 +32,7 @@ public abstract class PrimitiveStatement<T> extends AbstractStatement {
     protected transient T value;
 
     public PrimitiveStatement(TestCase tc, VariableReference varRef, T value) {
-        super(tc, (Type) varRef);
+        super(tc, varRef.getType());
         this.value = value;
     }
 
@@ -63,7 +64,7 @@ public abstract class PrimitiveStatement<T> extends AbstractStatement {
         // TODO This kills the benefit of inheritance.
         // Let each class implement the clone method instead
 
-        Class<?> clazz = genericClass.getRawClass();
+        ClassReader clazz = genericClass.getRawClass();
         PrimitiveStatement<?> statement = null;
 
         return statement;

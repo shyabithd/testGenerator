@@ -1,5 +1,6 @@
 package generator.utils.generic;
 
+import generator.ClassReader;
 import generator.utils.GenericClass;
 import utils.Inputs;
 
@@ -14,7 +15,7 @@ import java.util.Map.Entry;
  */
 public class VarMap {
 
-	private final Map<TypeVariable<?>, Type> map = new LinkedHashMap<>();
+	private final Map<TypeVariable<?>, ClassReader.DataType> map = new LinkedHashMap<>();
 
 	/**
 	 * Creates an empty VarMap
@@ -22,11 +23,11 @@ public class VarMap {
 	public VarMap() {
 	}
 
-	public void add(TypeVariable<?> variable, Type value) {
+	public void add(TypeVariable<?> variable, ClassReader.DataType value) {
 		map.put(variable, value);
 	}
 
-	public void addAll(TypeVariable<?>[] variables, Type[] values) throws IllegalArgumentException{
+	public void addAll(TypeVariable<?>[] variables, ClassReader.DataType[] values) throws IllegalArgumentException{
 		Inputs.checkNull(variables,values);
 		if(variables.length != values.length) {
 			throw new IllegalArgumentException("Array length mismatch");
@@ -45,39 +46,15 @@ public class VarMap {
 	}
 
 
-	public Type map(Type type) throws IllegalArgumentException{
+	public ClassReader.DataType map(ClassReader.DataType type) throws IllegalArgumentException{
 		Inputs.checkNull(type);
 
-		if (type instanceof Class) {
-			return type;
-		} else if (type instanceof TypeVariable) {
-			// TypeVariables may also come from generic methods!
-			// assert map.containsKey(type);
-			if (map.containsKey(type))
-				return map.get(type);
-			else {
-				//FIXME: (wrong) tmp workaround, as WildcardTypeImpl does crash EvoSuite
-				//return Object.class;
-				// TODO: Bounds should be mapped, but might be recursive so we just use unbounded for now
-				return null;
-			}
-		} else if (type instanceof ParameterizedType) {
-			ParameterizedType pType = (ParameterizedType) type;
-			return null;
-		} else if (type instanceof WildcardType) {
-			WildcardType wType = (WildcardType) type;
-			return null;
-		} else if (type instanceof GenericArrayType) {
-			return GenericArrayTypeImpl.createArrayType(map(((GenericArrayType) type).getGenericComponentType()));
-		} else {
-			throw new IllegalArgumentException("not implemented: mapping " + type.getClass()
-			        + " (" + type + ")");
-		}
+		return type;
 	}
 
-	public Type[] map(Type[] types) throws IllegalArgumentException{
+	public ClassReader.DataType[] map(ClassReader.DataType[] types) throws IllegalArgumentException{
 		Inputs.checkNull(types);
-		Type[] result = new Type[types.length];
+		ClassReader.DataType[] result = new ClassReader.DataType[types.length];
 		for (int i = 0; i < types.length; i++) {
 			result[i] = map(types[i]);
 		}

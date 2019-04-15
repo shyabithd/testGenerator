@@ -1,5 +1,6 @@
 package generator.testcase.statement;
 
+import generator.ClassReader;
 import generator.Properties;
 import generator.assertion.Assertion;
 import generator.testcase.Scope;
@@ -24,7 +25,7 @@ public class ArrayStatement extends AbstractStatement {
 
 	private static final long serialVersionUID = -2858236370873914156L;
 
-	protected ArrayStatement(TestCase tc) throws IllegalArgumentException {
+	public ArrayStatement(TestCase tc) throws IllegalArgumentException {
 
 		super(tc);
 	}
@@ -51,7 +52,7 @@ public class ArrayStatement extends AbstractStatement {
 	}
 	/** {@inheritDoc} */
 	@Override
-	public Type getReturnType() {
+	public ClassReader.DataType getReturnType() {
 		return null;
 	}
 
@@ -197,6 +198,11 @@ public class ArrayStatement extends AbstractStatement {
 			return false;
 
 			return false;
+
+	}
+
+	@Override
+	public void replace(VariableReference var1, VariableReference var2) {
 
 	}
 

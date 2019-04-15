@@ -1,5 +1,6 @@
 package generator.testcase.statement;
 
+import generator.ClassReader;
 import generator.assertion.Assertion;
 import generator.testcase.Scope;
 import generator.testcase.TestCase;
@@ -175,7 +176,7 @@ public interface Statement {
 	 *
 	 * @return Generic type of return value
 	 */
-	public Type getReturnType();
+	public ClassReader.DataType getReturnType();
 
 	/**
 	 * Retrieve the test case this statement is part of
@@ -263,4 +264,8 @@ public interface Statement {
 	 *            a {@link Set} object.
 	 */
 	public void setAssertions(Set<Assertion> assertions);
+
+    boolean references(VariableReference returnValue);
+
+	void replace(VariableReference var1, VariableReference var2);
 }

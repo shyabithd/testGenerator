@@ -1,19 +1,19 @@
 package master;
 
 import executionmode.Help;
-import generator.ClientProcess;
+import generator.*;
 import generator.Properties;
-import generator.TimeController;
 import generator.classpath.ClassPathHandler;
-import generator.classpath.ResourceList;
 import generator.result.TestGenerationResult;
 import generator.rmi.service.ClientNodeRemote;
 import generator.utils.LoggingUtils;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.eclipse.core.runtime.CoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rmi.MasterServices;
+import generator.ClassReader;
 import utils.ExternalProcessHandler;
 import utils.JarPathing;
 import utils.JavaExecCmdUtil;
@@ -48,7 +48,7 @@ public class TestGeneration {
 
 
         if (line.hasOption("class")) {
-            results.addAll(generateTests(strategy, line.getOptionValue("class"), javaOpts));
+            results.addAll(generateTests(strategy, line.getOptionValue("projectCP"), line.getOptionValue("class"), javaOpts));
         } else {
             LoggingUtils.getGeneratorLogger().error(
                     "Please specify either target class ('-class' option), prefix ('-prefix' option), or " +
@@ -58,14 +58,20 @@ public class TestGeneration {
         return results;
     }
 
-    private static boolean findTargetClass(String target) {
+    private static boolean findTargetClass(String projectCP, String target) {
 
-        if (ResourceList.getInstance(null).hasClass(target)) {
-            return true;
+        ClassReader classReader = new ClassReader();
+        try {
+            classReader.readFile(projectCP+"/"+target);
+            classReader.parseTree();
+            TestGenerationContext.getInstance().setClassReader(classReader);
+            Properties.setTargetClass(classReader);
+        } catch (CoreException e) {
+
+            LoggingUtils.getGeneratorLogger().info("* Unknown class: " + target +
+                    ". Be sure its full qualifying name  is correct and the classpath is properly set with '-projectCP'");
+            return false;
         }
-
-        LoggingUtils.getGeneratorLogger().info("* Unknown class: " + target +
-                ". Be sure its full qualifying name  is correct and the classpath is properly set with '-projectCP'");
 
         return true;
     }
@@ -95,12 +101,13 @@ public class TestGeneration {
         cmdLine.add("-DCP_file_path="+projectCPFilePath);
     }
 
-    private static List<List<TestGenerationResult>> generateTests(Properties.Strategy strategy, String target,
+    private static List<List<TestGenerationResult>> generateTests(Properties.Strategy strategy, String projectCP,
+                                                                  String target,
                                                                   List<String> args) {
 
         LoggingUtils.getGeneratorLogger().info("* Going to generate test cases for class: "+target);
 
-        if (!findTargetClass(target)) {
+        if (!findTargetClass(projectCP, target)) {
             return Arrays.asList(Arrays.asList(new TestGenerationResult[]{}));
         }
 
@@ -320,10 +327,6 @@ public class TestGeneration {
         }
 
         String[] newArgs = cmdLine.toArray(new String[cmdLine.size()]);
-
-        for (String entry : ClassPathHandler.getInstance().getTargetProjectClasspath().split(File.pathSeparator)) {
-
-        }
 
         handler.setBaseDir(TestSuite.base_dir_path);
 

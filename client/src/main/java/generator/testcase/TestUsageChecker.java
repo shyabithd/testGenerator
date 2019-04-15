@@ -1,5 +1,6 @@
 package generator.testcase;
 
+import generator.ClassReader;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,11 +56,6 @@ public class TestUsageChecker {
 			return true;
 		}
 
-        for(java.lang.reflect.Type paramType : c.getGenericParameterTypes()) {
-            if(!canUse(paramType))
-                return false;
-        }
-
         // If default access rights, then check if this class is in the same package as the target class
 		if (!Modifier.isPrivate(c.getModifiers())) {
 			//		        && !Modifier.isProtected(c.getModifiers())) {
@@ -73,20 +69,7 @@ public class TestUsageChecker {
 		return false;
 	}
 
-    public static boolean canUse(java.lang.reflect.Type t) {
-        if(t instanceof Class<?>) {
-            return canUse((Class<?>) t);
-        }
-        else if(t instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType)t;
-            for(java.lang.reflect.Type parameterType : pt.getActualTypeArguments()) {
-                if(!canUse(parameterType))
-                    return false;
-            }
-            if(!canUse(pt.getOwnerType())) {
-                return false;
-            }
-        }
+    public static boolean canUse(ClassReader.DataType t) {
         // If it's not declared, let's assume it's ok
         return true;
     }
@@ -172,12 +155,15 @@ public class TestUsageChecker {
         logger.debug("Not public");
         return false;
     }
-
-    public static boolean canUse(Field f) {
-        return canUse(f, f.getDeclaringClass());
+    public static boolean canUse(ClassReader ownerClass) {
+        return true;
     }
 
-    public static boolean canUse(Field f, Class<?> ownerClass) {
+    public static boolean canUse(ClassReader.Field f) {
+        return canUse(f, null);
+    }
+
+    public static boolean canUse(ClassReader.Field f, ClassReader ownerClass) {
 
         // TODO we could enable some methods from Object, like getClass
         if (f.getDeclaringClass().equals(Object.class))
@@ -185,20 +171,6 @@ public class TestUsageChecker {
 
         if (f.getDeclaringClass().equals(Thread.class))
             return false;// handled here to avoid printing reasons
-
-        if (!Properties.USE_DEPRECATED && f.isAnnotationPresent(Deprecated.class)) {
-			final Class<?> targetClass = Properties.getTargetClassAndDontInitialise();
-
-            if(Properties.hasTargetClassBeenLoaded() && !f.getDeclaringClass().equals(targetClass)) {
-                logger.debug("Skipping deprecated field " + f.getName());
-                return false;
-            }
-        }
-
-        if (f.isSynthetic()) {
-            logger.debug("Skipping synthetic field " + f.getName());
-            return false;
-        }
 
         if (f.getName().startsWith("ajc$")) {
             logger.debug("Skipping AspectJ field " + f.getName());
@@ -227,59 +199,21 @@ public class TestUsageChecker {
             return true;
         }
 
-        // If default access rights, then check if this class is in the same package as the target class
-        if (!Modifier.isPrivate(f.getModifiers())) {
-            //		        && !Modifier.isProtected(f.getModifiers())) {
-            String packageName = ClassUtils.getPackageName(ownerClass);
-
-            String declaredPackageName = ClassUtils.getPackageName(f.getDeclaringClass());
-
-            if (packageName.equals(Properties.CLASS_PREFIX)
-                    && packageName.equals(declaredPackageName)) {
-//            		TestClusterUtils.makeAccessible(f);
-                return true;
-            }
-        }
-
         return false;
     }
 
-    public static boolean canUse(Method m) {
+    public static boolean canUse(ClassReader.Method m) {
         return canUse(m, m.getDeclaringClass());
     }
 
-    public static boolean canUse(Method m, Class<?> ownerClass) {
-
-        if (m.isBridge()) {
-            logger.debug("Excluding bridge method: " + m.toString());
-            return false;
-        }
-
-        if (m.isSynthetic()) {
-            logger.debug("Excluding synthetic method: " + m.toString());
-            return false;
-        }
-
-        if (!Properties.USE_DEPRECATED && m.isAnnotationPresent(Deprecated.class)) {
-			final Class<?> targetClass = Properties.getTargetClassAndDontInitialise();
-
-            if(Properties.hasTargetClassBeenLoaded() && !m.getDeclaringClass().equals(targetClass)) {
-                logger.debug("Excluding deprecated method " + m.getName());
-                return false;
-            }
-        }
+    public static boolean canUse(ClassReader.Method m, ClassReader ownerClass) {
 
         if (m.getDeclaringClass().equals(Object.class)) {
             return false;
         }
 
-        if (!m.getReturnType().equals(String.class) && (!canUse(m.getReturnType()) || !canUse(m.getGenericReturnType()))) {
+        if (!m.getReturnType().equals(String.class) && (!canUse(m.getReturnType()))) {
             return false;
-        }
-
-        for(java.lang.reflect.Type paramType : m.getGenericParameterTypes()) {
-            if(!canUse(paramType))
-                return false;
         }
 
         if (m.getDeclaringClass().equals(Enum.class)) {
@@ -356,19 +290,6 @@ public class TestUsageChecker {
             return true;
         }
 
-        // If default access rights, then check if this class is in the same package as the target class
-        if (!Modifier.isPrivate(m.getModifiers())) {
-            //		        && !Modifier.isProtected(m.getModifiers())) {
-            String packageName = ClassUtils.getPackageName(ownerClass);
-            String declaredPackageName = ClassUtils.getPackageName(m.getDeclaringClass());
-            if (packageName.equals(Properties.CLASS_PREFIX)
-                    && packageName.equals(declaredPackageName)
-                    && !Modifier.isAbstract(m.getModifiers())) {
-//            		TestClusterUtils.makeAccessible(m);
-                return true;
-            }
-        }
-
         return false;
     }
 
@@ -379,11 +300,11 @@ public class TestUsageChecker {
 	 * @param m
 	 * @return
 	 */
-	private static boolean isForbiddenNonDeterministicCall(Method m) {
+	private static boolean isForbiddenNonDeterministicCall(ClassReader.Method m) {
 		if (!Properties.REPLACE_CALLS)
 			return false;
 
-		Class<?> declaringClass = m.getDeclaringClass();
+		ClassReader declaringClass = m.getDeclaringClass();
 
 		// Calendar is initialized with current time
 		if (declaringClass.equals(Calendar.class)) {

@@ -1,5 +1,6 @@
 package generator.testcase.statement;
 
+import generator.ClassReader;
 import generator.assertion.Assertion;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.TestCase;
@@ -24,6 +25,11 @@ public abstract class AbstractStatement implements Statement, Serializable {
 	 **/
 
 	protected VariableReference retval;
+
+	@Override
+	public boolean references(VariableReference var) {
+		return getVariableReferences().contains(var);
+	}
 
 	protected abstract class Executer {
 		/**
@@ -73,7 +79,7 @@ public abstract class AbstractStatement implements Statement, Serializable {
 		this.tc = tc;
 	}
 
-	protected AbstractStatement(TestCase tc, Type type) throws IllegalArgumentException{
+	protected AbstractStatement(TestCase tc, ClassReader.DataType type) throws IllegalArgumentException{
 		if(tc==null){
 			throw new IllegalArgumentException("tc cannot be null");
 		}

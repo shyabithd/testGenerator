@@ -1,5 +1,6 @@
 package generator.utils.generic;
 
+import generator.ClassReader;
 import generator.ga.ConstructionFailedException;
 import generator.utils.GenericClass;
 import org.apache.commons.lang3.ArrayUtils;
@@ -12,24 +13,20 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 
 	private static final long serialVersionUID = -2344346234923642901L;
 
-	private transient Field field;
+	private transient ClassReader.Field field;
 
-	public GenericField(Field field, GenericClass owner) {
+	public GenericField(ClassReader.Field field, GenericClass owner) {
 		super(new GenericClass(owner));
 		this.field = field;
-		field.setAccessible(true);
 	}
 
-	public GenericField(Field field, Class<?> owner) {
+	public GenericField(ClassReader.Field field, ClassReader owner) {
 		super(new GenericClass(owner));
-		this.field = field;
-		field.setAccessible(true);
 	}
 
-	public GenericField(Field field, Type owner) {
+	public GenericField(ClassReader.Field field, ClassReader.DataType owner) {
 		super(new GenericClass(owner));
 		this.field = field;
-		field.setAccessible(true);
 	}
 
 	@Override
@@ -76,42 +73,38 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 		return new GenericField(field, new GenericClass(owner));
 	}
 
-	public Field getField() {
+	public ClassReader.Field getField() {
 		return field;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.evosuite.utils.GenericAccessibleObject#getAccessibleObject()
 	 */
-	@Override
-	public AccessibleObject getAccessibleObject() {
-		return field;
-	}
 
 	/* (non-Javadoc)
 	 * @see org.evosuite.utils.GenericAccessibleObject#getDeclaringClass()
 	 */
 	@Override
 	public Class<?> getDeclaringClass() {
-		return field.getDeclaringClass();
+		return field.getClass();
 	}
 
 	@Override
-	public Type getGeneratedType() {
+	public ClassReader.DataType getGeneratedType() {
 		return getFieldType();
 	}
 
 	@Override
 	public Class<?> getRawGeneratedType() {
-		return field.getType();
+		return field.getType().getClass();
 	}
 
 	@Override
-	public Type getGenericGeneratedType() {
-		return field.getGenericType();
+	public ClassReader.DataType getGenericGeneratedType() {
+		return (ClassReader.DataType) field.getGenericType();
 	}
 
-	public Type getFieldType() {
+	public ClassReader.DataType getFieldType() {
 //		return GenericTypeReflector.getExactFieldType(field, owner.getType());
 		// 		try {
 		// fieldType = field.getGenericType();
@@ -122,7 +115,7 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 		return null;
 	}
 
-	public Type getGenericFieldType() {
+	public ClassReader.DataType getGenericFieldType() {
 		return field.getGenericType();
 	}
 
@@ -170,7 +163,7 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 	private void writeObject(ObjectOutputStream oos) throws IOException {
 		oos.defaultWriteObject();
 		// Write/save additional fields
-		oos.writeObject(field.getDeclaringClass().getName());
+		oos.writeObject(field.getName());
 		oos.writeObject(field.getName());
 	}
 

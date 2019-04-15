@@ -6,9 +6,12 @@ public class Branch implements Serializable, Comparable<Branch> {
 
 	private static final long serialVersionUID = -4732587925060748263L;
 
-	private final int actualBranchId = -1;
+	private final int actualBranchId;
 
 	private boolean isSwitch = false;
+
+	private String className;
+	private String methodName;
 
 	// for switch branches this value indicates to which case of the switch this
 	// branch belongs. if this value is null and this is in fact a switch this
@@ -19,8 +22,12 @@ public class Branch implements Serializable, Comparable<Branch> {
 	/** Keep track of branches that were introduced as part of TT */
 	private boolean isInstrumented = false;
 
-	public Branch() {
-
+	public String getClassName() { return className; }
+	public String getMethodName() { return methodName; }
+	public Branch(String className, String methodName, int lineNo) {
+		this.className = className;
+		this.methodName = methodName;
+		this.actualBranchId = lineNo;
 	}
 
 	/**

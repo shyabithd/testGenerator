@@ -23,6 +23,7 @@ import generator.coverage.branch.Branch;
 import generator.rmi.ClientServices;
 import generator.statistics.RuntimeVariable;
 import generator.strategy.TestGenerationStrategy;
+import generator.strategy.WholeTestSuiteStrategy;
 import generator.testsuite.TestSuiteChromosome;
 import generator.utils.LoggingUtils;
 
@@ -111,7 +112,7 @@ public class TestSuiteGeneratorHelper {
   static TestGenerationStrategy getTestGenerationStrategy() {
     switch (Properties.STRATEGY) {
       case TESTSUITE:
-        return null;
+        return new WholeTestSuiteStrategy();
       default:
         throw new RuntimeException("Unsupported strategy: " + Properties.STRATEGY);
     }

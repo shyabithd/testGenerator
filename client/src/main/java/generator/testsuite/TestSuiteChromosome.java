@@ -1,6 +1,7 @@
 package generator.testsuite;
 
 import generator.ga.Chromosome;
+import generator.ga.ChromosomeFactory;
 import generator.ga.LocalSearchObjective;
 import generator.ga.SecondaryObjective;
 import generator.testcase.TestCase;
@@ -19,6 +20,10 @@ public class TestSuiteChromosome extends AbstractTestSuiteChromosome<TestChromos
 	// ArrayList<SecondaryObjective<?>>();
 	private static int secondaryObjIndex = 0;
 	private static final long serialVersionUID = 88380759969800800L;
+
+	public TestSuiteChromosome(ChromosomeFactory<TestChromosome> testChromosomeFactory) {
+
+	}
 
 	public static void ShuffleSecondaryObjective() {
 		Collections.shuffle(secondaryObjectives);

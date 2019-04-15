@@ -1,11 +1,11 @@
 package generator.ga.metaheuristic;
 
-import generator.ga.Chromosome;
-import generator.ga.ChromosomeFactory;
-import generator.ga.FitnessFunction;
-import generator.ga.LocalSearchObjective;
+import generator.ga.*;
 import generator.ga.archive.Archive;
 import generator.ga.bloatcontrol.BloatControlFunction;
+import generator.ga.crossover.CrossOverFunction;
+import generator.ga.crossover.SinglePointCrossOver;
+import generator.ga.populationlimit.PopulationLimit;
 import generator.ga.selection.RankSelection;
 import generator.ga.selection.SelectionFunction;
 import generator.ga.stoppingconditions.MaxGenerationStoppingCondition;
@@ -33,6 +33,7 @@ public abstract class GeneticAlgorithm<T extends Chromosome> implements SearchAl
 
 	private static final Logger logger = LoggerFactory.getLogger(GeneticAlgorithm.class);
 
+	protected CrossOverFunction crossoverFunction = new SinglePointCrossOver();
 	/** Fitness function to rank individuals */
 	protected List<FitnessFunction<T>> fitnessFunctions = new ArrayList<FitnessFunction<T>>();
 
@@ -55,10 +56,10 @@ public abstract class GeneticAlgorithm<T extends Chromosome> implements SearchAl
 	protected Set<BloatControlFunction> bloatControl = new HashSet<BloatControlFunction>();
 
 	/** Local search might need a different local objective */
-	protected LocalSearchObjective<T> localObjective = null;//nnew DefaultLocalSearchObjective<>();
+	protected LocalSearchObjective<T> localObjective = new DefaultLocalSearchObjective<>();
 
 	/** The population limit decides when an iteration is done */
-	protected Properties.PopulationLimit populationLimit = null;//new IndividualPopulationLimit();
+	protected PopulationLimit populationLimit = null;//new IndividualPopulationLimit();
 
 	/** Age of the population */
 	protected int currentIteration = 0;
@@ -481,6 +482,23 @@ public abstract class GeneticAlgorithm<T extends Chromosome> implements SearchAl
 		sortPopulation();
 	}
 
+	protected void updateBestIndividualFromArchive() {
+		if (!Properties.TEST_ARCHIVE)
+			return;
+
+		T best = Archive.getArchiveInstance().mergeArchiveAndSolution(getBestIndividual());
+
+		// The archive may contain tests evaluated with a fitness function
+		// that is not part of the optimization (e.g. ibranch secondary objective)
+		Iterator<FitnessFunction<?>> it = best.getCoverageValues().keySet().iterator();
+		while(it.hasNext()) {
+			FitnessFunction<?> ff = it.next();
+			if(!fitnessFunctions.contains(ff))
+				it.remove();
+		}
+		population.add(0, best);
+	}
+
 	/**
 	 * <p>
 	 * getPopulationSize
@@ -730,7 +748,7 @@ public abstract class GeneticAlgorithm<T extends Chromosome> implements SearchAl
 		return false;//populationLimit.isPopulationFull(nextGeneration);
 	}
 
-	public void setPopulationLimit(Properties.PopulationLimit limit) {
+	public void setPopulationLimit(PopulationLimit limit) {
 		this.populationLimit = limit;
 	}
 

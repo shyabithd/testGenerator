@@ -12,11 +12,11 @@ import generator.testcase.ExecutionResult;
 import generator.testcase.TestCaseExecutor;
 import generator.testsuite.TestSuiteChromosome;
 import generator.utils.LoggingUtils;
+import org.eclipse.core.runtime.CoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import runtime.LoopCounter;
 
-import java.io.File;
 import java.util.Arrays;
 
 public class TestSuiteGenerator {
@@ -88,7 +88,6 @@ public class TestSuiteGenerator {
             LoopCounter.getInstance().setActive(true);
         }
 
-        System.out.println("sdsf");
         LoggingUtils.getGeneratorLogger().info("* Generating tests for class " + Properties.TARGET_CLASS);
         TestSuiteGeneratorHelper.printTestCriterion();
 
@@ -218,6 +217,15 @@ public class TestSuiteGenerator {
 
     private void initializeTargetClass() throws Throwable {
         String cp = ClassPathHandler.getInstance().getTargetProjectClasspath();
+        ClassReader classReader = new ClassReader();
+        try {
+            classReader.readFile(cp+"/"+Properties.TARGET_CLASS);
+            classReader.parseTree();
+            TestGenerationContext.getInstance().setClassReader(classReader);
+            Properties.setTargetClass(classReader);
+        } catch (CoreException e) {
+            throw e;
+        }
         // Here is where the <clinit> code should be invoked for the first time
         DefaultTestCase test = buildLoadTargetClassTestCase(Properties.TARGET_CLASS);
         ExecutionResult execResult = TestCaseExecutor.getInstance().execute(test, Integer.MAX_VALUE);

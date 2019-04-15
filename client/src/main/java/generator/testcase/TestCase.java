@@ -1,10 +1,11 @@
 package generator.testcase;
 
+import generator.ClassReader;
+import generator.Listenable;
 import generator.assertion.Assertion;
 import generator.ga.ConstructionFailedException;
 import generator.testcase.statement.Statement;
 import generator.testcase.variable.VariableReference;
-import generator.utils.Listenable;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -39,7 +40,7 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 	 * @return VariableReference of return value
 	 */
 	public VariableReference addStatement(Statement statement);
-
+	public void addCoveredGoal(TestFitnessFunction goal);
 	/**
 	 * Add new statement at position and fix following variable references
 	 *
@@ -119,7 +120,7 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 	 * @return
 	 * @throws ConstructionFailedException
 	 */
-	public VariableReference getLastObject(Type type)
+	public VariableReference getLastObject(ClassReader.DataType type)
 			throws ConstructionFailedException;
 
 	/**
@@ -129,7 +130,7 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 	 * @return
 	 * @throws ConstructionFailedException
 	 */
-	public VariableReference getLastObject(Type type, int position)
+	public VariableReference getLastObject(ClassReader.DataType type, int position)
 			throws ConstructionFailedException;
 
 	/**
@@ -147,12 +148,12 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 	 * @param position a int.
 	 * @return a {@link List} object.
 	 */
-	public List<VariableReference> getObjects(Type type, int position);
+	public List<VariableReference> getObjects(ClassReader.DataType type, int position);
 
-	public VariableReference getRandomNonNullNonPrimitiveObject(Type type, int position)
+	public VariableReference getRandomNonNullNonPrimitiveObject(ClassReader.DataType type, int position)
 	        throws ConstructionFailedException;
 
-	public VariableReference getRandomNonNullObject(Type type, int position)
+	public VariableReference getRandomNonNullObject(ClassReader.DataType type, int position)
 	        throws ConstructionFailedException;
 
 	/**
@@ -165,10 +166,10 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 
 	public VariableReference getRandomObject(int position);
 
-	public VariableReference getRandomObject(Type type)
+	public VariableReference getRandomObject(ClassReader.DataType type)
 	        throws ConstructionFailedException;
 
-	public VariableReference getRandomObject(Type type, int position)
+	public VariableReference getRandomObject(ClassReader.DataType type, int position)
 	        throws ConstructionFailedException;
 
 	/**
@@ -213,7 +214,7 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 	 * @param type a {@link Type} object.
 	 * @return a boolean.
 	 */
-	public boolean hasCastableObject(Type type);
+	public boolean hasCastableObject(ClassReader.DataType type);
 
 	/**
 	 * Check if the test case has an object of a given class
@@ -224,7 +225,7 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 	 *            Upper bound up to which the test is checked
 	 * @return True if there is something usable
 	 */
-	public boolean hasObject(Type type, int position);
+	public boolean hasObject(ClassReader.DataType type, int position);
 
 	/**
 	 * Check if var is referenced after its definition

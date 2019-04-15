@@ -1378,11 +1378,15 @@ public class Properties {
             Criterion.LINE, Criterion.BRANCH, Criterion.EXCEPTION, Criterion.WEAKMUTATION, Criterion.OUTPUT, Criterion.METHOD, Criterion.METHODNOEXCEPTION, Criterion.CBRANCH  };
 
 
+	public static void setTargetClass(ClassReader classReader) {
+		TARGET_CLASS_INSTANCE = classReader;
+	}
+
     /** Cache target class */
-	private static Class<?> TARGET_CLASS_INSTANCE = null;
+	private static ClassReader TARGET_CLASS_INSTANCE = null;
 	
 	/** Cache target regression class */
-	private static Class<?> TARGET_REGRESSION_CLASS_INSTANCE = null;
+	private static ClassReader TARGET_REGRESSION_CLASS_INSTANCE = null;
 
 	@Parameter(key = "CP", group = "Runtime", description = "The classpath of the target classes")
 	public static String CP = "";
@@ -2247,21 +2251,14 @@ public class Properties {
 	 *
 	 * @param isOriginal whether or not you want the original or the regression class.
 	 */
-	public static Class<?> getTargetClassRegression(boolean isOriginal){
+	public static ClassReader getTargetClassRegression(boolean isOriginal){
 		if (isOriginal && TARGET_CLASS_INSTANCE != null
 		        && TARGET_CLASS_INSTANCE.getCanonicalName().equals(TARGET_CLASS))
 			return TARGET_CLASS_INSTANCE;
 		else if(!isOriginal && TARGET_REGRESSION_CLASS_INSTANCE != null
 		        && TARGET_REGRESSION_CLASS_INSTANCE.getCanonicalName().equals(TARGET_CLASS))
 			return TARGET_REGRESSION_CLASS_INSTANCE;
-
-		if(isOriginal)
-		 toReturnRegression = true;
-
-		 Class<?> targetClass = getTargetClass(true);
-
-		 toReturnRegression = false;
-		 return targetClass;
+		return null;
 	}
 
 	/**

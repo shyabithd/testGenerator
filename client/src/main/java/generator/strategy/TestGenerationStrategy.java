@@ -2,6 +2,7 @@ package generator.strategy;
 
 import generator.Properties;
 import generator.coverage.FitnessFunctions;
+import generator.coverage.TestFitnessFactory;
 import generator.ga.stoppingconditions.*;
 import generator.rmi.ClientServices;
 import generator.statistics.RuntimeVariable;
@@ -75,14 +76,14 @@ public abstract class TestGenerationStrategy {
 //	 * Convert criterion names to factories for test case fitness functions
 //	 * @return
 //	 */
-//	public static List<TestFitnessFactory<? extends TestFitnessFunction>> getFitnessFactories() {
-//	    List<TestFitnessFactory<? extends TestFitnessFunction>> goalsFactory = new ArrayList<TestFitnessFactory<? extends TestFitnessFunction>>();
-//	    for (int i = 0; i < Properties.CRITERION.length; i++) {
-//	        goalsFactory.add(FitnessFunctions.getFitnessFactory(Properties.CRITERION[i]));
-//	    }
-//
-//		return goalsFactory;
-//	}
+	public static List<TestFitnessFactory<? extends TestFitnessFunction>> getFitnessFactories() {
+	    List<TestFitnessFactory<? extends TestFitnessFunction>> goalsFactory = new ArrayList<TestFitnessFactory<? extends TestFitnessFunction>>();
+	    for (int i = 0; i < Properties.CRITERION.length; i++) {
+	        goalsFactory.add(FitnessFunctions.getFitnessFactory(Properties.CRITERION[i]));
+	    }
+
+		return goalsFactory;
+	}
 	
 	/**
 	 * Check if the budget has been used up. The GA will do this check

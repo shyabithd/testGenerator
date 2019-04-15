@@ -1,5 +1,6 @@
 package generator.testcase.statement;
 
+import generator.ClassReader;
 import generator.Properties;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.Scope;
@@ -243,6 +244,11 @@ public class AssignmentStatement extends AbstractStatement {
 		return true;
 	}
 
+	@Override
+	public void replace(VariableReference var1, VariableReference var2) {
+
+	}
+
 	/**
 	 * Retrieve the set of FieldReference and ArrayIndex variables that can
 	 * serve as a replacement for retval
@@ -365,7 +371,7 @@ public class AssignmentStatement extends AbstractStatement {
 	}
 
 	@Override
-	public Type getReturnType() {
+	public ClassReader.DataType getReturnType() {
 		return null;
 	}
 }

@@ -1,27 +1,9 @@
-/**
- * Copyright (C) 2010-2018 Gordon Fraser, Andrea Arcuri and EvoSuite
- * contributors
- *
- * This file is part of EvoSuite.
- *
- * EvoSuite is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3.0 of the License, or
- * (at your option) any later version.
- *
- * EvoSuite is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with EvoSuite. If not, see <http://www.gnu.org/licenses/>.
- */
 package generator.ga.archive;
 
 import generator.Properties;
 import generator.ga.ChromosomeFactory;
 import generator.testcase.TestChromosome;
+import generator.testsuite.RandomLengthTestFactory;
 import generator.utils.LoggingUtils;
 import generator.utils.Randomness;
 import org.slf4j.Logger;
@@ -35,7 +17,7 @@ public class ArchiveTestChromosomeFactory implements ChromosomeFactory<TestChrom
 
   private final static Logger logger = LoggerFactory.getLogger(ArchiveTestChromosomeFactory.class);
 
-  private ChromosomeFactory<TestChromosome> defaultFactory = null;//new RandomLengthTestFactory();
+  private ChromosomeFactory<TestChromosome> defaultFactory = new RandomLengthTestFactory();
 
   /**
    * Serialized tests read from disk, eg from previous runs in CTG
@@ -62,9 +44,9 @@ public class ArchiveTestChromosomeFactory implements ChromosomeFactory<TestChrom
               in archive.
        */
       TestChromosome
-          test =
-          seededTests
-              .remove(seededTests.size() - 1); //pull out one element, 'last' just for efficiency
+              test =
+              seededTests
+                      .remove(seededTests.size() - 1); //pull out one element, 'last' just for efficiency
       test.getTestCase().removeAssertions(); // no assertions are used during search
       return test;
     }
@@ -72,7 +54,7 @@ public class ArchiveTestChromosomeFactory implements ChromosomeFactory<TestChrom
     TestChromosome test = null;
     // double P = (double)Archive.getArchiveInstance().getNumberOfCoveredTargets() / (double)Archive.getArchiveInstance().getNumberOfTargets();
     if (!Archive.getArchiveInstance().isArchiveEmpty()
-        && Randomness.nextDouble() < Properties.SEED_CLONE) {
+            && Randomness.nextDouble() < Properties.SEED_CLONE) {
       logger.info("Creating test based on archive");
       test = new TestChromosome();
       test.setTestCase(Archive.getArchiveInstance().getRandomSolution().getTestCase());

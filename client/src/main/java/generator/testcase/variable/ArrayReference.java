@@ -1,5 +1,6 @@
 package generator.testcase.variable;
 
+import generator.ClassReader;
 import generator.testcase.TestCase;
 import generator.testcase.statement.ArrayStatement;
 import generator.testcase.statement.AssignmentStatement;
@@ -26,7 +27,7 @@ public class ArrayReference extends VariableReferenceImpl {
 	private int[] lengths;
 
 	public ArrayReference(TestCase tc, Class<?> clazz) {
-		this(tc, new GenericClass(clazz),
+		this(tc, new GenericClass((ClassReader) null),
 		        new int[ArrayStatement.determineDimensions(clazz)]);
 	}
 

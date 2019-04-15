@@ -1,5 +1,8 @@
 package generator.testcase.variable;
 
+import generator.ClassReader;
+import generator.testcase.CodeUnderTestException;
+import generator.testcase.Scope;
 import generator.testcase.TestCase;
 import generator.utils.GenericClass;
 import org.slf4j.Logger;
@@ -40,7 +43,7 @@ public class VariableReferenceImpl implements VariableReference {
 		this.type = type;
 	}
 
-	public VariableReferenceImpl(TestCase testCase, Type type) {
+	public VariableReferenceImpl(TestCase testCase, ClassReader.DataType type) {
 		this(testCase, new GenericClass(type));
 	}
 
@@ -153,7 +156,7 @@ public class VariableReferenceImpl implements VariableReference {
 
 	/** {@inheritDoc} */
 	@Override
-	public Type getComponentType() {
+	public ClassReader.DataType getComponentType() {
 		return null;
 	}
 
@@ -236,7 +239,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Return true if other type can be assigned to this variable
 	 */
 	@Override
-	public boolean isAssignableFrom(Type other) {
+	public boolean isAssignableFrom(ClassReader.DataType other) {
 		return type.isAssignableFrom(other);
 	}
 
@@ -246,7 +249,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Return true if this variable can by assigned to a variable of other type
 	 */
 	@Override
-	public boolean isAssignableTo(Type other) {
+	public boolean isAssignableTo(ClassReader.DataType other) {
 		//if (type.hasWildcardTypes()) {
 		//	GenericClass rawClass = new GenericClass(other);
 		//	logger.warn("Getting raw assignables for: "+other +" and "+type);
@@ -284,7 +287,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Return type of this variable
 	 */
 	@Override
-	public Type getType() {
+	public ClassReader.DataType getType() {
 		return type.getType();
 	}
 
@@ -294,7 +297,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Set type of this variable
 	 */
 	@Override
-	public void setType(Type type) {
+	public void setType(ClassReader.DataType type) {
 		this.type = new GenericClass(type);
 	}
 
@@ -304,7 +307,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Return raw class of this variable
 	 */
 	@Override
-	public Class<?> getVariableClass() {
+	public ClassReader getVariableClass() {
 		return type.getRawClass();
 	}
 
@@ -315,7 +318,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 */
 	@Override
 	public Class<?> getComponentClass() {
-		return type.getRawClass().getComponentType();
+		return type.getRawClass().getClass();
 	}
 
 	/** {@inheritDoc} */
@@ -424,6 +427,11 @@ public class VariableReferenceImpl implements VariableReference {
 		return false;
 	}
 
+	@Override
+	public Object getObject(Scope scope) throws CodeUnderTestException {
+		return null;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.evosuite.testcase.VariableReference#getAdditionalVariableReference()
 	 */
@@ -480,8 +488,4 @@ public class VariableReferenceImpl implements VariableReference {
 	 * @see org.evosuite.testcase.VariableReference#changeClassLoader(java.lang.ClassLoader)
 	 */
 	/** {@inheritDoc} */
-	@Override
-	public void changeClassLoader(ClassLoader loader) {
-		type.changeClassLoader(loader);
-	}
 }

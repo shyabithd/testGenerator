@@ -1,5 +1,6 @@
 package generator.utils.generic;
 
+import generator.ClassReader;
 import generator.ga.ConstructionFailedException;
 import generator.utils.GenericClass;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -112,29 +113,12 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 	 * Checks if the given type is a class that is supposed to have type
 	 * parameters, but doesn't. In other words, if it's a really raw type.
 	 */
-	protected static boolean isMissingTypeParameters(Type type) {
-		if (type instanceof Class) {
-			for (Class<?> clazz = (Class<?>) type; clazz != null; clazz = clazz.getEnclosingClass()) {
-				if (clazz.getTypeParameters().length != 0)
-					return true;
-			}
-			return false;
-		} else if (type instanceof ParameterizedType) {
-			return false;
-		} else {
-			throw new AssertionError("Unexpected type " + type.getClass());
-		}
+	protected static boolean isMissingTypeParameters(ClassReader.DataType type) {
+		return false;
 	}
 
 	public GenericAccessibleObject(GenericClass owner) {
 		this.owner = owner;
-	}
-
-	public void changeClassLoader(ClassLoader loader) {
-		owner.changeClassLoader(loader);
-		for (GenericClass typeVariable : typeVariables) {
-			typeVariable.changeClassLoader(loader);
-		}
 	}
 
 	protected void copyTypeVariables(GenericAccessibleObject<?> copy) {
@@ -150,21 +134,19 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 	public abstract T copyWithOwnerFromReturnType(GenericClass returnType)
 	        throws ConstructionFailedException;
 
-	public abstract AccessibleObject getAccessibleObject();
-
 	public abstract Class<?> getDeclaringClass();
 
-	public abstract Type getGeneratedType();
+	public abstract ClassReader.DataType getGeneratedType();
 
 	public GenericClass getGeneratedClass() {
 		return new GenericClass(getGeneratedType());
 	}
 
-	public Type[] getGenericParameterTypes() {
-		return new Type[] {};
+	public ClassReader.DataType[] getGenericParameterTypes() {
+		return (new ArrayList<>()).toArray(new ClassReader.DataType[0]);
 	}
 	
-	public abstract Type getGenericGeneratedType();
+	public abstract ClassReader.DataType getGenericGeneratedType();
 
 	public T getGenericInstantiation() throws ConstructionFailedException {
 		T copy = copy();
@@ -174,7 +156,7 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 			return copy;
 		}
 
-		Map<TypeVariable<?>, Type> typeMap = copy.getOwnerClass().getTypeVariableMap();
+		Map<TypeVariable<?>, ClassReader.DataType> typeMap = copy.getOwnerClass().getTypeVariableMap();
 
 		logger.debug("Getting random generic instantiation of method: " + toString()
 		        + " with owner type map: " + typeMap);
@@ -182,13 +164,13 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 
 		// TODO: The bounds of this type parameter need to be updataed for the owner of the call
 		// which may instantiate some of the type parameters
-		for (TypeVariable<?> parameter : getTypeParameters()) {
-			GenericClass genericType = new GenericClass(parameter);
-			GenericClass concreteType = genericType.getGenericInstantiation(typeMap);
-			logger.debug("Setting parameter " + parameter + " to type "
-			        + concreteType.getTypeName());
-			typeParameters.add(concreteType);
-		}
+//		for (TypeVariable<?> parameter : getTypeParameters()) {
+//			GenericClass genericType = new GenericClass(parameter);
+//			GenericClass concreteType = genericType.getGenericInstantiation(typeMap);
+//			logger.debug("Setting parameter " + parameter + " to type "
+//			        + concreteType.getTypeName());
+//			typeParameters.add(concreteType);
+//		}
 		copy.setTypeParameters(typeParameters);
 		copy.owner = copy.getOwnerClass().getGenericInstantiation(typeMap);
 		return copy;
@@ -208,7 +190,7 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 
 		logger.debug("Getting generic instantiation for callee " + calleeType
 		        + " of method: " + toString() + " for callee " + calleeType);
-		Map<TypeVariable<?>, Type> typeMap = calleeType.getTypeVariableMap();
+		Map<TypeVariable<?>, ClassReader.DataType> typeMap = calleeType.getTypeVariableMap();
 		if (!hasTypeParameters()) {
 			logger.debug("Have no type parameters, just using typeMap of callee");
 			copy.owner = copy.getOwnerClass().getGenericInstantiation(typeMap);
@@ -216,12 +198,12 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 		}
 
 		List<GenericClass> typeParameters = new ArrayList<GenericClass>();
-		for (TypeVariable<?> parameter : getTypeParameters()) {
-			GenericClass concreteType = new GenericClass(parameter);
-			logger.debug("(I) Setting parameter " + parameter + " to type "
-			        + concreteType.getTypeName());
-			typeParameters.add(concreteType.getGenericInstantiation(typeMap));
-		}
+//		for (TypeVariable<?> parameter : getTypeParameters()) {
+//			GenericClass concreteType = new GenericClass(parameter);
+//			logger.debug("(I) Setting parameter " + parameter + " to type "
+//			        + concreteType.getTypeName());
+//			typeParameters.add(concreteType.getGenericInstantiation(typeMap));
+//		}
 		copy.setTypeParameters(typeParameters);
 		copy.owner = copy.getOwnerClass().getGenericInstantiation(typeMap);
 
@@ -236,11 +218,11 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 
 		// We just want to have the type variables defined in the generic method here
 		// and not type variables defined in the owner
-		Map<TypeVariable<?>, Type> concreteTypes = new HashMap<TypeVariable<?>, Type>();
+		Map<TypeVariable<?>, ClassReader.DataType> concreteTypes = new HashMap<TypeVariable<?>, ClassReader.DataType>();
 		logger.debug("Getting type map of generated type");
-		Map<TypeVariable<?>, Type> generatorTypes = generatedType.getTypeVariableMap();
+		Map<TypeVariable<?>, ClassReader.DataType> generatorTypes = generatedType.getTypeVariableMap();
 		logger.debug("Got type map of generated type: "+generatorTypes);
-		Type genericReturnType = getGenericGeneratedType();
+		ClassReader.DataType genericReturnType = getGenericGeneratedType();
 
 		logger.debug("Getting generic instantiation for return type " + generatedType
 		        + " of method: " + toString());
@@ -256,7 +238,7 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 		}
 		
 		if (genericReturnType instanceof ParameterizedType) {
-			for(Type parameterType : getGenericParameterTypes()) {
+			for(ClassReader.DataType parameterType : getGenericParameterTypes()) {
 				logger.debug("Checking parameter "+parameterType);
 				if(parameterType instanceof ParameterizedType) {
 //					Map<TypeVariable<?>, Type> matchedMap = GenericUtils.getMatchingTypeParameters((ParameterizedType) parameterType,
@@ -289,22 +271,22 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 
 		List<GenericClass> typeParameters = new ArrayList<GenericClass>();
 		logger.debug("Setting parameters with map: " + concreteTypes);
-		for (TypeVariable<?> parameter : getTypeParameters()) {
-			GenericClass concreteType = new GenericClass(parameter);
-			logger.debug("(I) Setting parameter " + parameter + " to type "
-			        + concreteType.getTypeName());
-			GenericClass instantiation = concreteType.getGenericInstantiation(concreteTypes);
-			logger.debug("Got instantiation for " + parameter + ": " + instantiation);
-			if (!instantiation.satisfiesBoundaries(parameter, concreteTypes)) {
-				logger.info("Type parameter does not satisfy boundaries: " + parameter
-				        + " " + instantiation);
-				logger.info(Arrays.asList(parameter.getBounds()).toString());
-				logger.info(instantiation.toString());
-				throw new ConstructionFailedException(
-				        "Type parameter does not satisfy boundaries: " + parameter);
-			}
-			typeParameters.add(instantiation);
-		}
+//		for (TypeVariable<?> parameter : getTypeParameters()) {
+//			GenericClass concreteType = new GenericClass(parameter);
+//			logger.debug("(I) Setting parameter " + parameter + " to type "
+//			        + concreteType.getTypeName());
+//			GenericClass instantiation = concreteType.getGenericInstantiation(concreteTypes);
+//			logger.debug("Got instantiation for " + parameter + ": " + instantiation);
+//			if (!instantiation.satisfiesBoundaries(parameter, concreteTypes)) {
+//				logger.info("Type parameter does not satisfy boundaries: " + parameter
+//				        + " " + instantiation);
+//				logger.info(Arrays.asList(parameter.getBounds()).toString());
+//				logger.info(instantiation.toString());
+//				throw new ConstructionFailedException(
+//				        "Type parameter does not satisfy boundaries: " + parameter);
+//			}
+//			typeParameters.add(instantiation);
+//		}
 		copy.setTypeParameters(typeParameters);
 		copy.owner = copy.getOwnerClass().getGenericInstantiation(concreteTypes);
 
@@ -321,7 +303,7 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 		return owner;
 	}
 
-	public Type getOwnerType() {
+	public ClassReader.DataType getOwnerType() {
 		return owner.getType();
 	}
 
@@ -383,19 +365,19 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 	 *            type arguments, or it's a raw type) Class
 	 * @return toMapType, but with type parameters from typeAndParams replaced.
 	 */
-	protected Type mapTypeParameters(Type toMapType, Type typeAndParams) {
+	protected ClassReader.DataType mapTypeParameters(ClassReader.DataType toMapType, ClassReader.DataType typeAndParams) {
 		if (isMissingTypeParameters(typeAndParams)) {
 			logger.debug("Is missing type parameters, so erasing types");
 			return null;
 		} else {
 			VarMap varMap = new VarMap();
-			Type handlingTypeAndParams = typeAndParams;
-			while (handlingTypeAndParams instanceof ParameterizedType) {
-				ParameterizedType pType = (ParameterizedType) handlingTypeAndParams;
-				Class<?> clazz = (Class<?>) pType.getRawType(); // getRawType should always be Class
-				varMap.addAll(clazz.getTypeParameters(), pType.getActualTypeArguments());
-				handlingTypeAndParams = pType.getOwnerType();
-			}
+			ClassReader.DataType handlingTypeAndParams = typeAndParams;
+//			while (handlingTypeAndParams instanceof ParameterizedType) {
+//				ParameterizedType pType = (ParameterizedType) handlingTypeAndParams;
+//				Class<?> clazz = (Class<?>) pType.getRawType(); // getRawType should always be Class
+//				//varMap.addAll(clazz.getTypeParameters(), pType.getActualTypeArguments());
+//				handlingTypeAndParams = pType.getOwnerType();
+//			}
 			varMap.addAll(getTypeVariableMap());
 			return varMap.map(toMapType);
 		}

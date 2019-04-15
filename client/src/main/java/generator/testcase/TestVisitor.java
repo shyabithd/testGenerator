@@ -28,4 +28,6 @@ public abstract class TestVisitor {
 //		else
 //			throw new RuntimeException("Unknown statement type: " + statement);
 	}
+
+    public abstract void visitTestCase(DefaultTestCase statements);
 }

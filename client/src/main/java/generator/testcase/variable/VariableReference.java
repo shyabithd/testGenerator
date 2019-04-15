@@ -1,5 +1,8 @@
 package generator.testcase.variable;
 
+import generator.ClassReader;
+import generator.testcase.CodeUnderTestException;
+import generator.testcase.Scope;
 import generator.testcase.TestCase;
 import generator.utils.GenericClass;
 
@@ -74,7 +77,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 *
 	 * @return a {@link Type} object.
 	 */
-	public Type getComponentType();
+	public ClassReader.DataType getComponentType();
 
 	public TestCase getTestCase();
 
@@ -148,7 +151,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 *            Right hand side of the assignment
 	 * @return a boolean.
 	 */
-	public boolean isAssignableFrom(Type other);
+	public boolean isAssignableFrom(ClassReader.DataType other);
 
 	/**
 	 * Return true if this variable can by assigned to a variable of other type
@@ -157,7 +160,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 *            Left hand side of the assignment
 	 * @return a boolean.
 	 */
-	public boolean isAssignableTo(Type other);
+	public boolean isAssignableTo(ClassReader.DataType other);
 
 	/**
 	 * Return true if other type can be assigned to this variable
@@ -182,7 +185,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 *
 	 * @return a {@link Type} object.
 	 */
-	public Type getType();
+	public ClassReader.DataType getType();
 
 	/**
 	 * Set type of this variable
@@ -190,14 +193,14 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 * @param type
 	 *            a {@link Type} object.
 	 */
-	public void setType(Type type);
+	public void setType(ClassReader.DataType type);
 
 	/**
 	 * Return raw class of this variable
 	 *
 	 * @return a {@link Class} object.
 	 */
-	public Class<?> getVariableClass();
+	public ClassReader getVariableClass();
 
 	/**
 	 * Return raw class of this variable's component
@@ -272,15 +275,6 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	public void replaceAdditionalVariableReference(VariableReference var1,
                                                    VariableReference var2);
 
-	/**
-	 * <p>
-	 * changeClassLoader
-	 * </p>
-	 *
-	 * @param loader
-	 *            a {@link ClassLoader} object.
-	 */
-	public void changeClassLoader(ClassLoader loader);
 
 	/**
 	 * <p>
@@ -319,4 +313,6 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 * @return a boolean.
 	 */
 	public boolean same(VariableReference r);
+
+    Object getObject(Scope scope) throws CodeUnderTestException;
 }

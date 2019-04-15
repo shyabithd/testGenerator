@@ -1,5 +1,6 @@
 package generator.testcase.variable;
 
+import generator.ClassReader;
 import generator.testcase.TestCase;
 import generator.utils.GenericClass;
 import java.lang.reflect.Type;
@@ -37,9 +38,9 @@ public class ArrayIndex extends VariableReferenceImpl {
 		setArrayIndices(indices);
 	}
 
-	private static Type getReturnType(ArrayReference array, int indicesCnt) {
+	private static ClassReader.DataType getReturnType(ArrayReference array, int indicesCnt) {
 		assert indicesCnt >= 1;
-		Type result = array.getComponentType();
+		ClassReader.DataType result = array.getComponentType();
 		// Class<?> result = (Class<?>) array.getComponentType();
 		for (int idx = 1; idx < indicesCnt; idx++) {
 			//result = GenericTypeReflector.getArrayComponentType(result);

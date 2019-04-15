@@ -16,6 +16,16 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>equinox.common</artifactId>
+            <version>3.6.200.v20130402-1505</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>cdt.core</artifactId>
+            <version>5.6.0.201402142303</version>
+        </dependency>
     </dependencies>
 
 </project>

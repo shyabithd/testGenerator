@@ -1,9 +1,9 @@
 package rmi.service;
 
+import generator.Listenable;
 import generator.rmi.service.ClientNodeRemote;
 import generator.rmi.service.ClientState;
 import generator.rmi.service.ClientStateInformation;
-import generator.utils.Listenable;
 
 import java.util.Collection;
 import java.util.Set;

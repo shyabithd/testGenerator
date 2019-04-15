@@ -67,7 +67,7 @@ public class Scope {
 		        && !o.getClass().isArray()) { // && !(reference instanceof ArrayReference)) {
 			if (TestUsageChecker.canUse(o.getClass())) {
 				if( Proxy.isProxyClass(o.getClass()) ) {
-					reference.setType(o.getClass().getSuperclass());
+					//reference.setType(o.getClass().getSuperclass());
 				} else if(o.getClass().getName().contains("EnhancerByMockito")){
 					/*
 						tricky: this is a functional mock for a class X. We do not want to set
@@ -87,10 +87,10 @@ public class Scope {
 							}
 						}
 					}
-					reference.setType(target);
+					//reference.setType(target);
 
 				} else {
-					reference.setType(o.getClass());
+					//reference.setType(o.getClass());
 				}
 			}
 		}

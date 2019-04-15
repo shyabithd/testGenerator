@@ -10,5 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.25" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse:equinox.common:3.6.200.v20130402-1505" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse:cdt.core:5.6.0.201402142303" level="project" />
   </component>
 </module>
