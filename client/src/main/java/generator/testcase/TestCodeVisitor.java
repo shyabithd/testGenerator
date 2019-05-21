@@ -1,12 +1,21 @@
 package generator.testcase;
 
 import generator.ClassReader;
+import generator.DataType;
+import generator.TestGenerationContext;
 import generator.assertion.Assertion;
 import generator.classpath.ResourceList;
-import generator.testcase.statement.Statement;
+import generator.testcase.statement.*;
+import generator.testcase.variable.ArrayIndex;
+import generator.testcase.variable.ArrayReference;
+import generator.testcase.variable.FieldReference;
 import generator.testcase.variable.VariableReference;
 import generator.utils.GenericClass;
 import generator.utils.NumberFormatter;
+import generator.utils.generic.GenericConstructor;
+import generator.utils.generic.GenericField;
+import generator.utils.generic.GenericMethod;
+import generator.variables.ConstantValue;
 import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -36,7 +45,7 @@ public class TestCodeVisitor extends TestVisitor {
 
 	protected final Map<VariableReference, String> variableNames = new HashMap<VariableReference, String>();
 
-	protected final Map<Class<?>, String> classNames = new HashMap<Class<?>, String>();
+	protected final Map<ClassReader, String> classNames = new HashMap<ClassReader, String>();
 
 	protected final Map<String, Integer> nextIndices = new HashMap<String, Integer>();
 
@@ -59,12 +68,12 @@ public class TestCodeVisitor extends TestVisitor {
 	 */
 	public Set<Class<?>> getImports() {
 		Set<Class<?>> imports = new HashSet<Class<?>>();
-		for (Class<?> clazz : classNames.keySet()) {
+		for (ClassReader clazz : classNames.keySet()) {
 			String name = classNames.get(clazz);
 			// If there's a dot in the name, then we assume this is the
 			// fully qualified name and we don't need to import
 			if (!name.contains(".")) {
-				imports.add(clazz);
+				imports.add(clazz.getClass());
 			}
 		}
 		return imports;
@@ -103,7 +112,36 @@ public class TestCodeVisitor extends TestVisitor {
 	}
 
 	public String getClassName(VariableReference var) {
-		return getTypeName(var.getType());
+		return getTypeName(var);
+	}
+
+	public String getClassName(ClassReader clazz) {
+		if (classNames.containsKey(clazz))
+			return classNames.get(clazz);
+
+		GenericClass c = new GenericClass(clazz);
+		String name = c.getClassName();
+		if (classNames.values().contains(name)) {
+			name = clazz.getCanonicalName();
+		} else {
+			/*
+			 * If e.g. there is a foo.bar.IllegalStateException with
+			 * foo.bar being the SUT package, then we need to use the
+			 * full package name for java.lang.IllegalStateException
+			 */
+			String fullName = Properties.CLASS_PREFIX +"."+name;
+			if(!fullName.equals(clazz.getCanonicalName())) {
+				name = clazz.getCanonicalName();
+			}
+		}
+
+		// We can't use "Test" because of JUnit
+		if (name.equals("Test")) {
+			name = clazz.getCanonicalName();
+		}
+		classNames.put(clazz, name);
+
+		return name;
 	}
 
 	private String getTypeName(ParameterizedType type) {
@@ -134,21 +172,14 @@ public class TestCodeVisitor extends TestVisitor {
 		return name;
 	}
 
-	public String getTypeName(ClassReader.DataType type) {
-		if (type instanceof ParameterizedType) {
-			return getTypeName((ParameterizedType) type);
-		} else if (type instanceof WildcardType) {
-			String ret = "Object";
-			return ret;
-		} else if (type instanceof TypeVariable) {
-			return "Object";
-		} else {
-			throw new RuntimeException("Unsupported type:" + type + ", class"
-			        + type.getClass());
+	public String getTypeName(DataType type) {
+		if (type.isPrimitive()) {
+			return type.getDataType();
 		}
+		return "Object";
 	}
 
-	public String getTypeParameterName(ClassReader.DataType type) {
+	public String getTypeParameterName(DataType type) {
 		if (type instanceof ParameterizedType) {
 			return getTypeName((ParameterizedType) type);
 		} else if (type instanceof WildcardType) {
@@ -189,196 +220,173 @@ public class TestCodeVisitor extends TestVisitor {
 	}
 
 	public String getTypeName(VariableReference var) {
-
-		GenericClass clazz = var.getGenericClass();
-		return getTypeName(clazz.getType());
+		DataType type = var.getType();
+		if (type.isPrimitive()) {
+			return type.getDataType();
+		}
+		return "Object";
 	}
 
-	/**
-	 * <p>
-	 * getClassName
-	 * </p>
-	 *
-	 * @param clazz
-	 *            a {@link Class} object.
-	 * @return a {@link String} object.
-	 */
-//	public String getClassName(Class<?> clazz) {
-//		if (classNames.containsKey(clazz))
-//			return classNames.get(clazz);
-//
-//		if (clazz.isArray()) {
-//			return getClassName(clazz.getComponentType()) + "[]";
-//		}
-//
-//		GenericClass c = new GenericClass(clazz);
-//		String name = c.getSimpleName();
-//		if (classNames.values().contains(name)) {
-//			name = clazz.getCanonicalName();
-//		} else {
-//			/*
-//			 * If e.g. there is a foo.bar.IllegalStateException with
-//			 * foo.bar being the SUT package, then we need to use the
-//			 * full package name for java.lang.IllegalStateException
-//			 */
-//			String fullName = Properties.CLASS_PREFIX +"."+name;
-//			if(!fullName.equals(clazz.getCanonicalName())) {
-//				try {
-//					if(ResourceList.getInstance(null).hasClass(fullName)) {
-//						name = clazz.getCanonicalName();
-//					}
-//				} catch(IllegalArgumentException e) {
-//					// If the classpath is not correct, then we just don't check
-//					// because that cannot happen in regular EvoSuite use, only
-//					// from test cases
-//				}
-//			}
-//		}
-//        // Ensure outer classes are imported as well
-//        Class<?> outerClass = clazz.getEnclosingClass();
-//        if(outerClass != null) {
-//            String enclosingName = getClassName(outerClass);
-//            String simpleOuterName = outerClass.getSimpleName() + ".";
-//            if(simpleOuterName.equals(enclosingName)) {
-//                name = enclosingName + name.substring(simpleOuterName.length());
-//            } else {
-//                name = enclosingName + name.substring(name.lastIndexOf(simpleOuterName) + simpleOuterName.length() - 1);
-//            }
-//        }
-//
-//		Class<?> declaringClass = clazz.getDeclaringClass();
-//		if(declaringClass != null) {
-//			getClassName(declaringClass);
-//        }
-//
-//		// We can't use "Test" because of JUnit
-//		if (name.equals("Test")) {
-//			name = clazz.getCanonicalName();
-//		}
-//		classNames.put(clazz, name);
-//
-//		return name;
-//	}
-//
-//	/**
-//	 * <p>
-//	 * getVariableName
-//	 * </p>
-//	 *
-//	 * @param var
-//	 *            a {@link org.evosuite.testcase.variable.VariableReference} object.
-//	 * @return a {@link String} object.
-//	 */
-//	public String getVariableName(VariableReference var) {
-//		if (var instanceof ConstantValue) {
-//			ConstantValue cval = (ConstantValue)var;
-//			if(cval.getValue() != null && cval.getVariableClass().equals(Class.class)) {
-//				return getClassName((Class<?>)cval.getValue())+".class";
-//			}
-//			return var.getName();
-//		} else if (var instanceof InputVariable) {
-//			return var.getName();
-//		} else if (var instanceof FieldReference) {
-//			VariableReference source = ((FieldReference) var).getSource();
-//			GenericField field = ((FieldReference) var).getField();
-//			if (source != null) {
-//				String ret = "";
-//				// If the method is not public and this is a subclass in a different package we need to cast
-//				if(!field.isPublic() && !field.getDeclaringClass().equals(source.getVariableClass()) && source.isAssignableTo(field.getDeclaringClass())) {
-//					String packageName1 = ClassUtils.getPackageName(field.getDeclaringClass());
-//					String packageName2 = ClassUtils.getPackageName(source.getVariableClass());
-//					if(!packageName1.equals(packageName2)) {
-//						ret += "((" + getClassName(field.getDeclaringClass())
-//								+ ")" + getVariableName(source) + ")";
-//					} else {
-//						ret += getVariableName(source);
-//					}
-//				}
-//				else if(!source.isAssignableTo(field.getField().getDeclaringClass())) {
-//					try {
-//						// If the concrete source class has that field then it's ok
-//						source.getVariableClass().getDeclaredField(field.getName());
-//						ret = getVariableName(source);
-//					} catch(NoSuchFieldException e) {
-//						// If not we need to cast to the subtype
-//						 ret= "((" + getTypeName(field.getField().getDeclaringClass()) + ") "+ getVariableName(source) +")";
-//					}
-//				} else {
-//					ret += getVariableName(source);
-//				}
-//
-//				return ret + "." + field.getName();
-//			}
-//			else
-//				return getClassName(field.getField().getDeclaringClass()) + "."
-//				        + field.getName();
-//		} else if (var instanceof ArrayIndex) {
-//			VariableReference array = ((ArrayIndex) var).getArray();
-//			List<Integer> indices = ((ArrayIndex) var).getArrayIndices();
-//			String result = getVariableName(array);
-//			for (Integer index : indices) {
-//				result += "[" + index + "]";
-//			}
-//			return result;
-//		} else if (var instanceof ArrayReference) {
-//			String className = var.getSimpleClassName();
-//			// int num = 0;
-//			// for (VariableReference otherVar : variableNames.keySet()) {
-//			// if (!otherVar.equals(var)
-//			// && otherVar.getVariableClass().equals(var.getVariableClass()))
-//			// num++;
-//			// }
-//			String variableName = className.substring(0, 1).toLowerCase()
-//			        + className.substring(1) + "Array";
-//			variableName = variableName.replace('.', '_').replace("[]", "");
-//			if (!variableNames.containsKey(var)) {
-//				if (!nextIndices.containsKey(variableName)) {
-//					nextIndices.put(variableName, 0);
-//				}
-//
-//				int index = nextIndices.get(variableName);
-//				nextIndices.put(variableName, index + 1);
-//
-//				variableName += index;
-//
-//				variableNames.put(var, variableName);
-//			}
-//
-//		} else if (!variableNames.containsKey(var)) {
-//			String className = var.getSimpleClassName();
-//			// int num = 0;
-//			// for (VariableReference otherVar : variableNames.keySet()) {
-//			// if (otherVar.getVariableClass().equals(var.getVariableClass()))
-//			// num++;
-//			// }
-//			String variableName = className.substring(0, 1).toLowerCase()
-//			        + className.substring(1);
-//			if (variableName.contains("[]")) {
-//				variableName = variableName.replace("[]", "Array");
-//			}
-//			variableName = variableName.replace(".", "_");
-//
-//			// Need a way to check for exact types, not assignable
-//			// int numObjectsOfType = test != null ? test.getObjects(var.getType(),
-//			//                                                      test.size()).size() : 2;
-//			// if (numObjectsOfType > 1 || className.equals(variableName)) {
-//			if (CharUtils.isAsciiNumeric(variableName.charAt(variableName.length() - 1)))
-//				variableName += "_";
-//
-//			if (!nextIndices.containsKey(variableName)) {
-//				nextIndices.put(variableName, 0);
-//			}
-//
-//			int index = nextIndices.get(variableName);
-//			nextIndices.put(variableName, index + 1);
-//
-//			variableName += index;
-//			// }
-//
-//			variableNames.put(var, variableName);
-//		}
-//		return variableNames.get(var);
-//	}
+	private String getParameterString(DataType[] parameterTypes,
+									  List<VariableReference> parameters, boolean isGenericMethod,
+									  boolean isOverloaded, int startPos) {
+		String parameterString = "";
+
+		for (int i = startPos; i < parameters.size(); i++) {
+			if (i > startPos) {
+				parameterString += ", ";
+			}
+			DataType declaredParamType = parameterTypes[i];
+			DataType actualParamType = parameters.get(i).getType();
+			String name = getVariableName(parameters.get(i));
+			if (isGenericMethod && !(declaredParamType instanceof WildcardType )) {
+				if (!declaredParamType.equals(actualParamType) || name.equals("null")) {
+					//parameterString += "(" + getTypeName(declaredParamType) + ") ";
+					if (name.contains("(short"))
+						name = name.replace("(short)", "");
+					if (name.contains("(byte"))
+						name = name.replace("(byte)", "");
+				}
+			} else if (name.equals("null")) {
+				parameterString += "(" + getTypeName(declaredParamType) + ") ";
+			} else if (!GenericClass.isAssignable(declaredParamType, actualParamType)) {
+				//if (TypeUtils.isArrayType(declaredParamType)
+				//						&& TypeUtils.isArrayType(actualParamType)) {
+				//					Class<?> componentClass = GenericTypeReflector.erase(declaredParamType).getComponentType();
+				//					if (componentClass.equals(Object.class)) {
+				//						GenericClass genericComponentClass = new GenericClass(
+				//								componentClass);
+				//						if (genericComponentClass.hasWildcardOrTypeVariables()) {
+				//							// If we are assigning a generic array, then we don't need to cast
+				//
+				//						} else {
+				//							// If we are assigning a non-generic array, then we do need to cast
+				//							parameterString += "(" + getTypeName(declaredParamType)
+				//									+ ") ";
+				//						}
+				//					} else { //if (!GenericClass.isAssignable(GenericTypeReflector.getArrayComponentType(declaredParamType), GenericTypeReflector.getArrayComponentType(actualParamType))) {
+				//						parameterString += "(" + getTypeName(declaredParamType) + ") ";
+				//					}
+				//				} else
+				if (!(actualParamType instanceof ParameterizedType)) {
+					parameterString += "(" + getTypeName(declaredParamType) + ") ";
+				}
+				if (name.contains("(short"))
+					name = name.replace("(short)", "");
+				if (name.contains("(byte"))
+					name = name.replace("(byte)", "");
+				//}
+			} else {
+				// We have to cast between wrappers and primitives in case there
+				// are overloaded signatures. This could be optimized by checking
+				// if there actually is a problem of overloaded signatures
+				if (isOverloaded) {
+					// If there is an overloaded method, we need to cast to make sure we use the right version
+					if (!declaredParamType.equals(actualParamType)) {
+						parameterString += "(" + getTypeName(declaredParamType) + ") ";
+					}
+				}
+			}
+
+			parameterString += name;
+		}
+
+		return parameterString;
+	}
+
+
+	public String getVariableName(VariableReference var) {
+		if (var instanceof ConstantValue) {
+			ConstantValue cval = (ConstantValue)var;
+			if(cval.getValue() != null && cval.getVariableClass().equals(Class.class)) {
+				return getClassName(var);
+			}
+			return var.getName();
+		} else if (var instanceof FieldReference) {
+			VariableReference source = ((FieldReference) var).getSource();
+			GenericField field = ((FieldReference) var).getField();
+			if (source != null) {
+				String ret = "";
+				if(!source.isAssignableTo(field.getField().getGenericType())) {
+					// If the concrete source class has that field then it's ok
+					//source.getVariableClass().getDeclaredField(field.getName());
+					ret = getVariableName(source);
+				} else {
+					ret += getVariableName(source);
+				}
+
+				return ret + "." + field.getName();
+			}
+			else
+				return getClassName(var) + "."
+						+ field.getName();
+		} else if (var instanceof ArrayIndex) {
+			VariableReference array = ((ArrayIndex) var).getArray();
+			List<Integer> indices = ((ArrayIndex) var).getArrayIndices();
+			String result = getVariableName(array);
+			for (Integer index : indices) {
+				result += "[" + index + "]";
+			}
+			return result;
+		} else if (var instanceof ArrayReference) {
+			String className = var.getSimpleClassName();
+			// int num = 0;
+			// for (VariableReference otherVar : variableNames.keySet()) {
+			// if (!otherVar.equals(var)
+			// && otherVar.getVariableClass().equals(var.getVariableClass()))
+			// num++;
+			// }
+			String variableName = className.substring(0, 1).toLowerCase()
+					+ className.substring(1) + "Array";
+			variableName = variableName.replace('.', '_').replace("[]", "");
+			if (!variableNames.containsKey(var)) {
+				if (!nextIndices.containsKey(variableName)) {
+					nextIndices.put(variableName, 0);
+				}
+
+				int index = nextIndices.get(variableName);
+				nextIndices.put(variableName, index + 1);
+
+				variableName += index;
+
+				variableNames.put(var, variableName);
+			}
+
+		} else if (!variableNames.containsKey(var)) {
+			String className = var.getSimpleClassName();
+			// int num = 0;
+			// for (VariableReference otherVar : variableNames.keySet()) {
+			// if (otherVar.getVariableClass().equals(var.getVariableClass()))
+			// num++;
+			// }
+			String variableName = className.substring(0, 1).toLowerCase()
+					+ className.substring(1);
+			if (variableName.contains("[]")) {
+				variableName = variableName.replace("[]", "Array");
+			}
+			variableName = variableName.replace(".", "_");
+
+			// Need a way to check for exact types, not assignable
+			// int numObjectsOfType = test != null ? test.getObjects(var.getType(),
+			//                                                      test.size()).size() : 2;
+			// if (numObjectsOfType > 1 || className.equals(variableName)) {
+			if (CharUtils.isAsciiNumeric(variableName.charAt(variableName.length() - 1)))
+				variableName += "_";
+
+			if (!nextIndices.containsKey(variableName)) {
+				nextIndices.put(variableName, 0);
+			}
+
+			int index = nextIndices.get(variableName);
+			nextIndices.put(variableName, index + 1);
+
+			variableName += index;
+			// }
+
+			variableNames.put(var, variableName);
+		}
+		return variableNames.get(var);
+	}
 
 	/**
 	 * Retrieve the names of all known variables
@@ -398,20 +406,6 @@ public class TestCodeVisitor extends TestVisitor {
 		return classNames.values();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.evosuite.testcase.TestVisitor#visitTestCase(org.evosuite.testcase.TestCase)
-	 */
-	/** {@inheritDoc} */
-//	@Override
-//	public void visitTestCase(TestCase test) {
-//		this.test = test;
-//		this.testCode = "";
-//		this.variableNames.clear();
-//		this.nextIndices.clear();
-//	}
-//
 //	protected void visitPrimitiveAssertion(PrimitiveAssertion assertion) {
 //		VariableReference source = assertion.getSource();
 //		Object value = assertion.getValue();
@@ -799,8 +793,205 @@ public class TestCodeVisitor extends TestVisitor {
 	}
 
 	@Override
-	public void visitTestCase(DefaultTestCase statements) {
+	public void visitTestCase(TestCase testCase) {
+		this.test = testCase;
+		this.testCode = "";
+		this.variableNames.clear();
+		this.nextIndices.clear();
+	}
 
+	@Override
+	public void visitPrimitiveStatement(PrimitiveStatement<?> statement) {
+		VariableReference retval = statement.getReturnValue();
+		Object value = statement.getValue();
+
+//		if (statement instanceof StringPrimitiveStatement) {
+//			if(value == null) {
+//				testCode += ((Class<?>) retval.getType()).getSimpleName() + " "
+//						+ getVariableName(retval) + " = null;" + NEWLINE;
+//
+//			} else {
+//				String escapedString = StringUtil.getEscapedString((String) value);
+//				testCode += ((Class<?>) retval.getType()).getSimpleName() + " "
+//						+ getVariableName(retval) + " = \"" + escapedString + "\";" + NEWLINE;
+//			}
+//			// testCode += ((Class<?>) retval.getType()).getSimpleName() + " "
+//			// + getVariableName(retval) + " = \""
+//			// + StringEscapeUtils.escapeJava((String) value) + "\";\n";
+//		} else if (statement instanceof EnvironmentDataStatement) {
+//			testCode += ((EnvironmentDataStatement<?>) statement).getTestCode(getVariableName(retval));
+//		} else if (statement instanceof ClassPrimitiveStatement) {
+//			StringBuilder builder = new StringBuilder();
+//			String className = getClassName(retval);
+//			className = className.replaceAll("Class<(.*)(<.*>)>", "Class<$1>");
+//			builder.append(className);
+//			builder.append(" ");
+//			builder.append(getVariableName(retval));
+//			builder.append(" = ");
+//			builder.append(getClassName(retval));
+//			builder.append(".class;");
+//			builder.append(NEWLINE);
+//			testCode += builder.toString();
+//		} else {
+			testCode += getClassName(retval) + " " + getVariableName(retval) + " = "
+					+ NumberFormatter.getNumberString(value, this) + ";" + NEWLINE;
+//		}
+		//addAssertions(statement);
+	}
+
+	@Override
+	public void visitFieldStatement(FieldStatement statement) {
+
+	}
+
+	@Override
+	public void visitMethodStatement(MethodStatement statement) {
+		String result = "";
+		VariableReference retval = statement.getReturnValue();
+		GenericMethod method = statement.getMethod();
+		Throwable exception = getException(statement);
+		List<VariableReference> parameters = statement.getParameterReferences();
+		boolean isGenericMethod = method.hasTypeParameters();
+
+		if (exception != null && !statement.isDeclaredException(exception)) {
+			result += "// Undeclared exception!" + NEWLINE;
+		}
+
+		boolean lastStatement = statement.getPosition() == statement.getTestCase().size() - 1;
+		boolean unused = !Properties.ASSERTIONS ? exception != null : test != null
+				&& !test.hasReferences(retval);
+
+		if (!retval.isVoid() && retval.getAdditionalVariableReference() == null
+				&& !unused) {
+			if (exception != null) {
+				if (!lastStatement || statement.hasAssertions())
+					result += getClassName(retval) + " " + getVariableName(retval)
+							+ " = " + retval.getDefaultValueString() + ";" + NEWLINE;
+			} else {
+				result += getClassName(retval) + " ";
+			}
+		}
+
+		String parameter_string = getParameterString(method.getParameterTypes(),
+				parameters, isGenericMethod,
+				method.isOverloaded(parameters), 0);
+
+		String callee_str = "";
+		if (!unused && !retval.isAssignableFrom(method.getReturnType())
+				// Static generic methods are a special case where we shouldn't add a cast
+				&& !(isGenericMethod && method.getParameterTypes().length == 0 && method.isStatic())) {
+			String name = getClassName(retval);
+			if (!name.matches(".*\\.\\d+$")) {
+				callee_str = "(" + name + ")";
+			}
+		}
+		if (method.isStatic()) {
+			callee_str += getClassName(method.getMethod().getDeclaringClass());
+		} else {
+			VariableReference callee = statement.getCallee();
+
+			if (callee instanceof ConstantValue) {
+				callee_str += "((" + getClassName(method.getMethod().getDeclaringClass())
+						+ ")" + getVariableName(callee) + ")";
+			} else {
+				if(!callee.isAssignableTo(method.getMethod().getReturnType())) {
+					// If the concrete callee class has that method then it's ok
+					//callee.getVariableClass().getDeclaredMethod(method.getName(), method.getRawParameterTypes());
+					callee_str += getVariableName(callee);
+
+				} else {
+					callee_str += getVariableName(callee);
+				}
+			}
+		}
+
+		if (retval.isVoid()) {
+			result += callee_str + "." + method.getName() + "(" + parameter_string + ");";
+		} else {
+			// if (exception == null || !lastStatement)
+			if (!unused)
+				result += getVariableName(retval) + " = ";
+			// If unused, then we don't want to print anything:
+			//else
+			//	result += getClassName(retval) + " " + getVariableName(retval) + " = ";
+
+			result += callee_str + "." + method.getName() + "(" + parameter_string + ");";
+		}
+
+		testCode += result + NEWLINE;
+		//addAssertions(statement);
+	}
+
+	@Override
+	public void visitConstructorStatement(ConstructorStatement statement) {
+		String result = "";
+		GenericConstructor constructor = statement.getConstructor();
+		VariableReference retval = statement.getReturnValue();
+		boolean isGenericConstructor = constructor.hasTypeParameters();
+		boolean isNonStaticMemberClass = !constructor.isStatic();
+
+		List<VariableReference> parameters = statement.getParameterReferences();
+		int startPos = 0;
+//		if (isNonStaticMemberClass) {
+//			startPos = 1;
+//		}
+		DataType[] parameterTypes = constructor.getParameterTypes();
+		String parameterString = getParameterString(parameterTypes, parameters,
+				isGenericConstructor,
+				constructor.isOverloaded(parameters),
+				startPos);
+
+		result += statement.getConstructor().getName() + "* ";
+
+		if (isNonStaticMemberClass) {
+			result += getVariableName(retval) + " = "
+					+ "new "
+					+ statement.getConstructor().getName() + "("
+					+ parameterString + ");";
+		} else {
+			result += getVariableName(retval) + " = new "
+					+ getTypeName(constructor.getOwnerType())
+					+ "(" + parameterString + ");";
+		}
+
+		testCode += result + NEWLINE;
+	}
+
+	private String getSimpleTypeName(DataType type) {
+		String typeName = getTypeName(type);
+		int dotIndex = typeName.lastIndexOf(".");
+		if (dotIndex >= 0 && (dotIndex + 1) < typeName.length()) {
+			typeName = typeName.substring(dotIndex + 1);
+		}
+
+		return typeName;
+	}
+
+	@Override
+	public void visitArrayStatement(ArrayStatement statement) {
+
+	}
+
+	@Override
+	public void visitAssignmentStatement(AssignmentStatement statement) {
+
+	}
+
+	@Override
+	public void visitNullStatement(NullStatement statement) {
+
+	}
+
+	@Override
+	public void visitStatement(Statement statement) {
+		System.out.println("HELOOO");
+		if (!statement.getComment().isEmpty()) {
+			String comment = statement.getComment();
+			for (String line : comment.split("\n")) {
+				testCode += "// " + line + NEWLINE;
+			}
+		}
+		super.visitStatement(statement);
 	}
 
 //	private void addAssertions(Statement statement) {
@@ -1501,15 +1692,6 @@ public class TestCodeVisitor extends TestVisitor {
 //        return ex;
 //    }
 //
-//	private String getSimpleTypeName(Type type) {
-//		String typeName = getTypeName(type);
-//		int dotIndex = typeName.lastIndexOf(".");
-//		if (dotIndex >= 0 && (dotIndex + 1) < typeName.length()) {
-//			typeName = typeName.substring(dotIndex + 1);
-//		}
-//
-//		return typeName;
-//	}
 //
 //	/*
 //	 * (non-Javadoc)

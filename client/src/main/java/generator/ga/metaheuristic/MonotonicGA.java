@@ -266,7 +266,7 @@ public class MonotonicGA<T extends Chromosome> extends GeneticAlgorithm<T> {
 
 		}
 		// archive
-		TimeController.execute(this::updateBestIndividualFromArchive, "update from archive", 5_000);
+		//TimeController.execute(this::updateBestIndividualFromArchive, "update from archive", 5_000);
 
 		notifySearchFinished();
 	}

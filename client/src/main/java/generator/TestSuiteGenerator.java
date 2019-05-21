@@ -6,9 +6,11 @@ import generator.result.TestGenerationResult;
 import generator.result.TestGenerationResultBuilder;
 import generator.rmi.ClientServices;
 import generator.rmi.service.ClientState;
+import generator.setup.DependencyAnalysis;
 import generator.strategy.TestGenerationStrategy;
 import generator.testcase.DefaultTestCase;
 import generator.testcase.ExecutionResult;
+import generator.testcase.TestCase;
 import generator.testcase.TestCaseExecutor;
 import generator.testsuite.TestSuiteChromosome;
 import generator.utils.LoggingUtils;
@@ -17,7 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import runtime.LoopCounter;
 
+import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 public class TestSuiteGenerator {
 
@@ -140,7 +144,7 @@ public class TestSuiteGenerator {
         ClientServices.getInstance().getClientNode().publishPermissionStatistics();
 
         // progressMonitor.setCurrentPhase("Writing JUnit test cases");
-        TestGenerationResult result = writeJUnitTestsAndCreateResult(testCases);
+        TestGenerationResult result = writeUnitTestsAndCreateResult(testCases);
         writeJUnitFailingTests();
         /*
          * TODO: when we will have several processes running in parallel, we ll
@@ -174,8 +178,25 @@ public class TestSuiteGenerator {
     private void writeObjectPool(TestSuiteChromosome testSuite) {
     }
 
-    private static TestGenerationResult writeJUnitTestsAndCreateResult(TestSuiteChromosome testSuiteChromosome) {
-        return null;
+    private static TestGenerationResult writeUnitTestsAndCreateResult(TestSuiteChromosome testSuite) {
+        return writeUnitTest(testSuite, Properties.JUNIT_SUFFIX);
+    }
+
+    private static TestGenerationResult writeUnitTest(TestSuiteChromosome testSuite, String junitSuffix) {
+        List<TestCase> tests = testSuite.getTests();
+        if (Properties.JUNIT_TESTS) {
+            ClientServices.getInstance().getClientNode().changeState(ClientState.WRITING_TESTS);
+
+            TestSuiteWriter suiteWriter = new TestSuiteWriter();
+            suiteWriter.insertTests(tests);
+
+            String name = Properties.TARGET_CLASS.substring(Properties.TARGET_CLASS.lastIndexOf(".") + 1);
+            String testDir = ClassPathHandler.getInstance().getTargetProjectClasspath();
+
+            LoggingUtils.getGeneratorLogger().info("* Writing JUnit test case '" + (name + junitSuffix) + "' to " + testDir);
+            suiteWriter.writeTestSuite(name + junitSuffix, testDir);
+        }
+        return TestGenerationResultBuilder.buildSuccessResult();
     }
 
     private void writeJUnitFailingTests() {
@@ -207,7 +228,7 @@ public class TestSuiteGenerator {
         TestSuiteChromosome suite = new TestSuiteChromosome();
         DefaultTestCase test = buildLoadTargetClassTestCase(Properties.TARGET_CLASS);
         suite.addTest(test);
-        writeJUnitTestsAndCreateResult(suite);
+        writeUnitTestsAndCreateResult(suite);
     }
 
     private static DefaultTestCase buildLoadTargetClassTestCase(String className) {
@@ -241,7 +262,7 @@ public class TestSuiteGenerator {
             throw t;
         }
 
-        //DependencyAnalysis.analyzeClass(Properties.TARGET_CLASS, Arrays.asList(cp.split(File.pathSeparator)));
+        DependencyAnalysis.analyzeClass(Properties.TARGET_CLASS, Arrays.asList(cp.split(File.pathSeparator)));
         LoggingUtils.getGeneratorLogger().info("* Finished analyzing classpath");
     }
 

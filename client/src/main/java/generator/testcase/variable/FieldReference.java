@@ -1,6 +1,7 @@
 package generator.testcase.variable;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.TestCase;
 import generator.utils.generic.GenericField;
 import org.slf4j.Logger;
@@ -32,16 +33,15 @@ public class FieldReference extends VariableReferenceImpl {
 		this.source = source;
 	}
 
-	public FieldReference(TestCase testCase, GenericField field, ClassReader.DataType fieldType,
+	public FieldReference(TestCase testCase, GenericField field, DataType fieldType,
 						  VariableReference source) {
 		super(testCase, fieldType);
 		assert (field != null);
 		assert (source != null || field.isStatic()) : "No source object was supplied, therefore we assumed the field to be static. However asking the field if it was static, returned false";
 		this.field = field;
 		this.source = source;
-		assert (source == null || field.getField().getDeclaringClass().isAssignableFrom(source.getVariableClass().getClass()))
+		assert (source == null)
 		: "Assertion! Declaring class: " + field.getField().getDeclaringClass()
-		+ " # classloader: " + field.getField().getDeclaringClass().getClassLoader()
 		+ " | Variable Class: " + source.getVariableClass()
 		+ " | Field name: " + field.getField();
 		//		logger.info("Creating new field assignment for field " + field + " of object "
@@ -55,7 +55,7 @@ public class FieldReference extends VariableReferenceImpl {
 		this.source = null;
 	}
 
-	public FieldReference(TestCase testCase, GenericField field, ClassReader.DataType type) {
+	public FieldReference(TestCase testCase, GenericField field, DataType type) {
 		super(testCase, type);
 		this.field = field;
 		this.source = null;
@@ -97,8 +97,7 @@ public class FieldReference extends VariableReferenceImpl {
 	/** {@inheritDoc} */
 	@Override
 	public void setAdditionalVariableReference(VariableReference var) {
-		if (source != null
-		        && !field.getField().getDeclaringClass().isAssignableFrom(var.getVariableClass().getClass())) {
+		if (source != null) {
 			logger.info("Not assignable: " + field.getField().getDeclaringClass()
 			        + " and " + var);
 			assert (false);
@@ -167,7 +166,7 @@ public class FieldReference extends VariableReferenceImpl {
 	 */
 	@Override
 	public VariableReference copy(TestCase newTestCase, int offset) {
-		ClassReader.DataType fieldType = field.getFieldType();
+		DataType fieldType = field.getFieldType();
 		if (source != null) {
 			//			VariableReference otherSource = newTestCase.getStatement(source.getStPosition()).getReturnValue();
 			VariableReference otherSource = source.copy(newTestCase, offset);

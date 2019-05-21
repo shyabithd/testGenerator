@@ -1,6 +1,7 @@
 package generator.reflection;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.Scope;
 import generator.testcase.TestCase;
@@ -53,7 +54,7 @@ public class PrivateMethodStatement extends MethodStatement {
         list.add(callee);
         list.add(new ConstantValue(tc, new GenericClass(klass), method.getName()));
 
-        ClassReader.DataType[] parameterTypes = method.getParameterTypes();
+        DataType[] parameterTypes = method.getParameterTypes();
         assert(parameterTypes.length == inputs.size());
         for(int parameterNum = 0; parameterNum < parameterTypes.length; parameterNum++) {
             VariableReference vr = inputs.get(parameterNum);

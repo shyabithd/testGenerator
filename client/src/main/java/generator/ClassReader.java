@@ -4,24 +4,33 @@ import generator.coverage.branch.Branch;
 import generator.coverage.branch.BranchPool;
 import org.eclipse.cdt.core.dom.ast.*;
 import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTFunctionDeclarator;
+import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTVisibilityLabel;
 import org.eclipse.cdt.core.dom.ast.gnu.cpp.GPPLanguage;
 import org.eclipse.cdt.core.parser.*;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.*;
 import org.eclipse.core.runtime.CoreException;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ClassReader {
 
+    private List<Field> fieldList = new ArrayList<>();
+    private List<Constructor> constructors = new ArrayList<>();
+
+    public List<Constructor> getConstructors() { return constructors; }
+
     public String getClassName() {
         return className;
     }
 
     public Field getDeclaredField(String fieldName) {
-        return null;
+        return fieldList.stream().filter(field -> fieldName.equals(field.getName()))
+                .findAny()
+                .orElse(null);
     }
 
     public Field getField(String name) {
@@ -29,7 +38,7 @@ public class ClassReader {
     }
 
     public class Parameter {
-        public String type;
+        public DataType type;
         public String variableName;
     }
 
@@ -37,10 +46,11 @@ public class ClassReader {
 
         public int lineNo;
         public String methodName;
-        public String returnType;
+        public DataType returnType;
         public List<Parameter> parameters = new ArrayList<>();
         public CPPASTBinaryExpression ifCondition;
         public CPPASTSwitchStatement switchCondition;
+        public ClassReader classReader;
 
         public int getModifiers() {
             return 0;
@@ -48,84 +58,56 @@ public class ClassReader {
 
         public DataType[] getGenericParameterTypes() {
             List<DataType> dataTypes = new ArrayList<>();
-            dataTypes.add(new DataType());
+            for (Parameter parameter : parameters) {
+                dataTypes.add(parameter.type);
+            }
             return dataTypes.toArray(new DataType[0]);
         }
 
         public String getName() {
-            return "";
+            if(methodName.contains(":")) {
+                return methodName.substring(methodName.lastIndexOf(":")+1, methodName.indexOf("("));
+            }
+            return methodName.substring(methodName.lastIndexOf(" "), methodName.indexOf("("));
         }
 
         public DataType[] getParameterTypes() {
-            return null;
+            return getTypeParameters();
         }
 
         public ClassReader getDeclaringClass() {
-            return null;
+            return classReader;
         }
 
-        public TypeVariable<?>[] getTypeParameters() {
-            return null;
+        public DataType[] getTypeParameters() {
+           ArrayList<DataType> dataTypes = new ArrayList<>();
+           for(Parameter parameter : parameters) {
+               dataTypes.add(parameter.type);
+           }
+           return dataTypes.toArray(new DataType[0]);
         }
 
         public DataType getGenericReturnType() {
-            return null;
+            return returnType;
         }
 
         public DataType getReturnType() {
-            return null;
+            return returnType;
         }
 
         public String toGenericString() {
-            return "";
+            return getName();
         }
 
-        public Parameter getParameters() {
-            return null;
+        public Parameter[] getParameters() {
+            return parameters.toArray(new Parameter[0]);
         }
     }
 
-    public class DataType
-    {
-        public boolean isPrimitive() {
-            return true;
-        }
-
-        public ClassReader getClassReader() {
-            return null;
-        }
-    }
-    public class Field
-    {
-        public int getModifiers()
-        {
-            return 1;
-        }
-
-        public String getName() {
-            return "";
-        }
-
-        public DataType getType() {
-            return new DataType();
-        }
-
-        public DataType getGenericType() {
-            return null;
-        }
-
-        public String toGenericString() {
-            return "";
-        }
-
-        public Class<?> getDeclaringClass() {
-            return null;
-        }
-    }
     private IASTTranslationUnit translationUnitCPP;
     private IASTTranslationUnit translationUnitH;
     private String className;
-    private Map<String, List<Method>> methodDefinitions = new HashMap<>();
+    private Map<String, List<Method>> methods = new HashMap<>();
     private Map<String, String> returnMap = new HashMap<>();
 
     public String getCanonicalName() {
@@ -143,17 +125,14 @@ public class ClassReader {
     public Method[] getDeclaredMethods()
     {
         List<Method> methodList = new ArrayList<>();
-        for(Map.Entry<String, List<Method> > entry : methodDefinitions.entrySet())
+        for(Map.Entry<String, List<Method> > entry : methods.entrySet())
         {
             methodList.add(entry.getValue().get(0));
         }
         return methodList.toArray(new Method[0]);
     }
 
-    public Field[] getDeclaredFields()
-    {
-        List<Field> fieldList = new ArrayList<>();
-        fieldList.add(new Field());
+    public Field[] getDeclaredFields() {
         return fieldList.toArray(new Field[0]);
     }
 
@@ -212,7 +191,7 @@ public class ClassReader {
             parseTree(translationUnitCPP, 1);
         if(translationUnitH != null)
             parseTree(translationUnitH, 1);
-        for(Map.Entry<String, List<Method> > entry : methodDefinitions.entrySet())
+        for(Map.Entry<String, List<Method> > entry : methods.entrySet())
         {
             if(entry.getValue().size() == 1)
             {
@@ -235,49 +214,40 @@ public class ClassReader {
                 }
             }
         }
-
+        visit();
     }
 
 
 
     private void parseTree(IASTNode node, int index) {
         IASTNode[] children = node.getChildren();
-        boolean printContents = true;
-        if ((node instanceof CPPASTTranslationUnit)) {
-            printContents = false;
-        }
-        String offset = "";
-        try {
-            offset = node.getSyntax() != null ? " (offset: " + node.getFileLocation().getNodeOffset() + "," + node.getFileLocation().getNodeLength() + ")" : "";
-            printContents = node.getFileLocation().getNodeLength() < 30;
-        } catch (ExpansionOverlapsBoundaryException e) {
-            e.printStackTrace();
-        } catch (UnsupportedOperationException e) {
-            offset = "UnsupportedOperationException";
-        }
-
         if (node.getClass().getSimpleName().equals("CPPASTFunctionDefinition")) {
-            Method method = new Method();
-            method.lineNo = node.getFileLocation().getStartingLineNumber();
-            method.returnType = node.getChildren()[0].getRawSignature();
-            if(node.getChildren()[1].getChildren()[0].getChildren().length==0)
-                method.methodName = node.getChildren()[1].getChildren()[0].getRawSignature();
-            else
-                method.methodName = node.getChildren()[1].getChildren()[0].getChildren()[1].getRawSignature();
-            for(IASTNode iastNode : node.getChildren()[1].getChildren()){
-                Parameter parameter = new Parameter();
-                if (iastNode.getClass().getSimpleName().equals("CPPASTParameterDeclaration")) {
-                    parameter.type = iastNode.getChildren()[0].getRawSignature();
-                    parameter.variableName = iastNode.getChildren()[1].getRawSignature();
-                    method.parameters.add(parameter);
+            if (!node.getChildren()[0].getRawSignature().equals("")) {
+                Method method = new Method();
+                method.lineNo = node.getFileLocation().getStartingLineNumber();
+                method.returnType = new DataType(node.getChildren()[0].getRawSignature(), this);
+                method.methodName = node.getChildren()[0].getRawSignature() + " " + node.getChildren()[1].getChildren()[0].getRawSignature() + "(";
+                for (IASTNode iastNode : node.getChildren()[1].getChildren()) {
+                    Parameter parameter = new Parameter();
+                    if (iastNode.getClass().getSimpleName().equals("CPPASTParameterDeclaration")) {
+                        parameter.type = new DataType(iastNode.getChildren()[0].getRawSignature(), this);
+                        parameter.variableName = iastNode.getChildren()[1].getRawSignature();
+                        method.parameters.add(parameter);
+                        method.methodName = method.methodName + iastNode.getChildren()[0].getRawSignature() + ",";
+                    }
                 }
-            }
-            for(IASTNode iastNode : node.getChildren()[2].getChildren()){
-                insertIfClauses(iastNode, method);
-                insertSwitchClauses(iastNode, method);
-            }
+                int i = method.methodName.lastIndexOf(',');
+                if (i > 0)
+                    method.methodName = method.methodName.substring(0, method.methodName.lastIndexOf(',')) + ")";
+                else
+                    method.methodName = method.methodName + ")";
+                for(IASTNode iastNode : node.getChildren()[2].getChildren()){
+                    insertIfClauses(iastNode, method);
+                    insertSwitchClauses(iastNode, method);
+                }
 
-            insertToMap(method);
+                insertToMap(method);
+            }
         }
         //System.out.println(String.format(new StringBuilder("%1$").append(index * 2).append("s").toString(), new Object[]{"-"}) + node.getClass().getSimpleName() + offset + " -> " + (printContents ? node.getRawSignature().replaceAll("\n", " \\ ") : node.getRawSignature().subSequence(0, 5)));
         for (IASTNode iastNode : children)
@@ -286,12 +256,13 @@ public class ClassReader {
 
     private void insertToMap(Method method) {
 
-        if(methodDefinitions.get(method.methodName) != null) {
-            methodDefinitions.get(method.methodName).add(method);
+        method.classReader = this;
+        if(methods.get(method.methodName) != null) {
+            methods.get(method.methodName).add(method);
         } else {
             List<Method> methodList = new ArrayList<>();
             methodList.add(method);
-            methodDefinitions.put(method.methodName, methodList);
+            methods.put(method.methodName, methodList);
         }
     }
 
@@ -343,57 +314,79 @@ public class ClassReader {
 
     public void visit() {
         if(translationUnitCPP != null)
-            doVisit(translationUnitCPP);
+            doVisit(translationUnitCPP, this, fieldList);
         if(translationUnitH != null)
-            doVisit(translationUnitH);
+            doVisit(translationUnitH, this, fieldList);
     }
-    public void doVisit(IASTTranslationUnit iastTranslationUnit) {
+    public void doVisit(IASTTranslationUnit iastTranslationUnit, ClassReader classReader, List<Field> fieldList) {
         ASTVisitor visitor = new ASTVisitor() {
             public int visit(IASTName name) {
-                if ((name.getParent() instanceof CPPASTFunctionDeclarator)) {
-                    System.out.println("IASTName: " + name.getClass().getSimpleName() + "(" + name.getRawSignature() + ") - > parent: " + name.getParent().getClass().getSimpleName());
-                    System.out.println("-- isVisible: " + isVisible(name));
-                }
+//                if ((name.getParent() instanceof CPPASTFunctionDeclarator)) {
+//                    System.out.println("IASTName: " + name.getClass().getSimpleName() + "(" + name.getRawSignature() + ") - > parent: " + name.getParent().getClass().getSimpleName());
+//                    System.out.println("-- isVisible: " + isVisible(name));
+//                }
                 return 3;
             }
 
             public int visit(IASTDeclaration declaration) {
-                System.out.println("declaration: " + declaration + " ->  " + declaration.getRawSignature());
+                //System.out.println("declaration: " + declaration + " ->  " + declaration.getRawSignature());
                 if ((declaration instanceof IASTSimpleDeclaration)) {
                     IASTSimpleDeclaration ast = (IASTSimpleDeclaration) declaration;
                     try {
-                        System.out.println("--- type: " + ast.getSyntax() + " (childs: " + ast.getChildren().length + ")");
+                        //System.out.println("--- type: " + ast.getSyntax() + " (childs: " + ast.getChildren().length + ")");
+                        if (ast.getSyntax().getImage().equals("class")) {
+                            definedclassName = ast.getSyntax().getNext().getImage();
+                        }
+                        if (!ast.getSyntax().getImage().equals("class") && !ast.getSyntax().getImage().equals("enum") && !ast.getSyntax().getImage().equals("struct")) {
+                            IASTNode typedef = ast.getChildren().length == 1 ? ast.getChildren()[0] : ast.getChildren()[1];
+                            //System.out.println("------- hello: " + ast.getSyntax());
+                            String dataType = ast.getSyntax().getImage();
+                            if(definedclassName.equals(dataType)) {
+                                List<Parameter> parameters = new ArrayList<>();
+                                for (ICPPASTParameterDeclaration parameterDeclaration : ((CPPASTFunctionDeclarator) ast.getChildren()[1]).getParameters()) {
+                                    Parameter parameter = new Parameter();
+                                    parameter.type = new DataType(parameterDeclaration.getChildren()[0].getRawSignature(), classReader);
+                                    parameter.variableName = parameterDeclaration.getChildren()[1].getRawSignature();
+                                    parameters.add(parameter);
+                                }
+                                Constructor constructor = new Constructor(definedclassName, parameters,classReader);
+                                constructors.add(constructor);
+                            }
+                            String name = ast.getSyntax().getNext().toString();
+                            Field field = new Field(name, dataType, classReader);
+                            fieldList.add(field);
+                        }
                         IASTNode typedef = ast.getChildren().length == 1 ? ast.getChildren()[0] : ast.getChildren()[1];
-                        System.out.println("------- typedef: " + typedef);
+                        //System.out.println("------- typedef: " + typedef);
                         IASTNode[] children = typedef.getChildren();
-                        if ((children != null) && (children.length > 0))
-                            System.out.println("------- typedef-name: " + children[0].getRawSignature());
+                       // if ((children != null) && (children.length > 0))
+                            //System.out.println("------- typedef-name: " + children[0].getRawSignature());
                     } catch (ExpansionOverlapsBoundaryException e) {
                         e.printStackTrace();
                     }
-                    IASTDeclarator[] declarators = ast.getDeclarators();
-                    for (IASTDeclarator iastDeclarator : declarators) {
-                        System.out.println("iastDeclarator > " + iastDeclarator.getName());
-                    }
-                    IASTAttribute[] attributes = ast.getAttributes();
-                    for (IASTAttribute iastAttribute : attributes) {
-                        System.out.println("iastAttribute > " + iastAttribute);
-                    }
+//                    IASTDeclarator[] declarators = ast.getDeclarators();
+//                    for (IASTDeclarator iastDeclarator : declarators) {
+//                        System.out.println("iastDeclarator > " + iastDeclarator.getName());
+//                    }
+//                    IASTAttribute[] attributes = ast.getAttributes();
+//                    for (IASTAttribute iastAttribute : attributes) {
+//                        System.out.println("iastAttribute > " + iastAttribute);
+//                    }
                 }
-                if ((declaration instanceof IASTFunctionDefinition)) {
-                    IASTFunctionDefinition ast = (IASTFunctionDefinition) declaration;
-                    IScope scope = ast.getScope();
-                    try {
-                        System.out.println("### function() - Parent = " + scope.getParent().getScopeName());
-                        System.out.println("### function() - Syntax = " + ast.getSyntax());
-                    } catch (DOMException e) {
-                        e.printStackTrace();
-                    } catch (ExpansionOverlapsBoundaryException e) {
-                        e.printStackTrace();
-                    }
-                    ICPPASTFunctionDeclarator typedef = (ICPPASTFunctionDeclarator) ast.getDeclarator();
-                    System.out.println("------- typedef: " + typedef.getName());
-                }
+//                if ((declaration instanceof IASTFunctionDefinition)) {
+//                    IASTFunctionDefinition ast = (IASTFunctionDefinition) declaration;
+//                    IScope scope = ast.getScope();
+//                    try {
+//                        System.out.println("### function() - Parent = " + scope.getParent().getScopeName());
+//                        System.out.println("### function() - Syntax = " + ast.getSyntax());
+//                    } catch (DOMException e) {
+//                        e.printStackTrace();
+//                    } catch (ExpansionOverlapsBoundaryException e) {
+//                        e.printStackTrace();
+//                    }
+//                    ICPPASTFunctionDeclarator typedef = (ICPPASTFunctionDeclarator) ast.getDeclarator();
+//                    System.out.println("------- typedef: " + typedef.getName());
+//                }
                 return 3;
             }
 
@@ -412,11 +405,13 @@ public class ClassReader {
             }
         };
         visitor.shouldVisitNames = true;
-        visitor.shouldVisitDeclarations = false;
+        visitor.shouldVisitDeclarations = true;
         visitor.shouldVisitDeclarators = true;
         visitor.shouldVisitAttributes = true;
         visitor.shouldVisitStatements = false;
         visitor.shouldVisitTypeIds = true;
         iastTranslationUnit.accept(visitor);
     }
+
+    private String definedclassName;
 }

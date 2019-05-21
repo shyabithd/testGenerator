@@ -1,6 +1,7 @@
 package generator.testcase.variable;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.Scope;
 import generator.testcase.TestCase;
@@ -77,7 +78,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 *
 	 * @return a {@link Type} object.
 	 */
-	public ClassReader.DataType getComponentType();
+	public DataType getComponentType();
 
 	public TestCase getTestCase();
 
@@ -151,7 +152,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 *            Right hand side of the assignment
 	 * @return a boolean.
 	 */
-	public boolean isAssignableFrom(ClassReader.DataType other);
+	public boolean isAssignableFrom(DataType other);
 
 	/**
 	 * Return true if this variable can by assigned to a variable of other type
@@ -160,7 +161,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 *            Left hand side of the assignment
 	 * @return a boolean.
 	 */
-	public boolean isAssignableTo(ClassReader.DataType other);
+	public boolean isAssignableTo(DataType other);
 
 	/**
 	 * Return true if other type can be assigned to this variable
@@ -185,7 +186,7 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 *
 	 * @return a {@link Type} object.
 	 */
-	public ClassReader.DataType getType();
+	public DataType getType();
 
 	/**
 	 * Set type of this variable
@@ -193,14 +194,14 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	 * @param type
 	 *            a {@link Type} object.
 	 */
-	public void setType(ClassReader.DataType type);
+	public void setType(DataType type);
 
 	/**
 	 * Return raw class of this variable
 	 *
 	 * @return a {@link Class} object.
 	 */
-	public ClassReader getVariableClass();
+	public DataType getVariableClass();
 
 	/**
 	 * Return raw class of this variable's component
@@ -315,4 +316,6 @@ public interface VariableReference extends Comparable<VariableReference>, Serial
 	public boolean same(VariableReference r);
 
     Object getObject(Scope scope) throws CodeUnderTestException;
+
+    void setObject(Scope scope, Object value) throws CodeUnderTestException;
 }

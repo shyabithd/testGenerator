@@ -1,6 +1,7 @@
 package generator.variables;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.Scope;
 import generator.testcase.TestCase;
 import generator.testcase.statement.Statement;
@@ -30,7 +31,7 @@ public class ConstantValue extends VariableReferenceImpl {
         setValue(value);
     }
 
-	public ConstantValue(TestCase testCase, ClassReader.DataType type) {
+	public ConstantValue(TestCase testCase, DataType type) {
 		this(testCase, new GenericClass(type));
 	}
 

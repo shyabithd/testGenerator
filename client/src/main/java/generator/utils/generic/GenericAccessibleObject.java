@@ -1,6 +1,7 @@
 package generator.utils.generic;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.ga.ConstructionFailedException;
 import generator.utils.GenericClass;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -113,7 +114,7 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 	 * Checks if the given type is a class that is supposed to have type
 	 * parameters, but doesn't. In other words, if it's a really raw type.
 	 */
-	protected static boolean isMissingTypeParameters(ClassReader.DataType type) {
+	protected static boolean isMissingTypeParameters(DataType type) {
 		return false;
 	}
 
@@ -136,17 +137,17 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 
 	public abstract Class<?> getDeclaringClass();
 
-	public abstract ClassReader.DataType getGeneratedType();
+	public abstract DataType getGeneratedType();
 
 	public GenericClass getGeneratedClass() {
 		return new GenericClass(getGeneratedType());
 	}
 
-	public ClassReader.DataType[] getGenericParameterTypes() {
-		return (new ArrayList<>()).toArray(new ClassReader.DataType[0]);
+	public DataType[] getGenericParameterTypes() {
+		return (new ArrayList<>()).toArray(new DataType[0]);
 	}
 	
-	public abstract ClassReader.DataType getGenericGeneratedType();
+	public abstract DataType getGenericGeneratedType();
 
 	public T getGenericInstantiation() throws ConstructionFailedException {
 		T copy = copy();
@@ -156,7 +157,7 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 			return copy;
 		}
 
-		Map<TypeVariable<?>, ClassReader.DataType> typeMap = copy.getOwnerClass().getTypeVariableMap();
+		Map<TypeVariable<?>, DataType> typeMap = copy.getOwnerClass().getTypeVariableMap();
 
 		logger.debug("Getting random generic instantiation of method: " + toString()
 		        + " with owner type map: " + typeMap);
@@ -190,7 +191,7 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 
 		logger.debug("Getting generic instantiation for callee " + calleeType
 		        + " of method: " + toString() + " for callee " + calleeType);
-		Map<TypeVariable<?>, ClassReader.DataType> typeMap = calleeType.getTypeVariableMap();
+		Map<TypeVariable<?>, DataType> typeMap = calleeType.getTypeVariableMap();
 		if (!hasTypeParameters()) {
 			logger.debug("Have no type parameters, just using typeMap of callee");
 			copy.owner = copy.getOwnerClass().getGenericInstantiation(typeMap);
@@ -218,11 +219,11 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 
 		// We just want to have the type variables defined in the generic method here
 		// and not type variables defined in the owner
-		Map<TypeVariable<?>, ClassReader.DataType> concreteTypes = new HashMap<TypeVariable<?>, ClassReader.DataType>();
+		Map<TypeVariable<?>, DataType> concreteTypes = new HashMap<TypeVariable<?>, DataType>();
 		logger.debug("Getting type map of generated type");
-		Map<TypeVariable<?>, ClassReader.DataType> generatorTypes = generatedType.getTypeVariableMap();
+		Map<TypeVariable<?>, DataType> generatorTypes = generatedType.getTypeVariableMap();
 		logger.debug("Got type map of generated type: "+generatorTypes);
-		ClassReader.DataType genericReturnType = getGenericGeneratedType();
+		DataType genericReturnType = getGenericGeneratedType();
 
 		logger.debug("Getting generic instantiation for return type " + generatedType
 		        + " of method: " + toString());
@@ -238,7 +239,7 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 		}
 		
 		if (genericReturnType instanceof ParameterizedType) {
-			for(ClassReader.DataType parameterType : getGenericParameterTypes()) {
+			for(DataType parameterType : getGenericParameterTypes()) {
 				logger.debug("Checking parameter "+parameterType);
 				if(parameterType instanceof ParameterizedType) {
 //					Map<TypeVariable<?>, Type> matchedMap = GenericUtils.getMatchingTypeParameters((ParameterizedType) parameterType,
@@ -252,19 +253,19 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 			}
 		}
 		logger.debug("GeneratorTypes is now: "+generatorTypes);
-		List<TypeVariable<?>> parameters = Arrays.asList(getTypeParameters());
-		for (TypeVariable<?> var : generatorTypes.keySet()) {
-			if (parameters.contains(var) && !(generatorTypes.get(var) instanceof WildcardType)) {
-				logger.debug("Parameter "+var+" in map, adding to concrete types: "+generatorTypes.get(var));
-				concreteTypes.put(var, generatorTypes.get(var));
-			} else {
-				logger.debug("Parameter "+var+" not in map, not adding to concrete types: "+generatorTypes.get(var));
-				logger.debug("Key: "+var.getGenericDeclaration());
-				for(TypeVariable<?> k : parameters) {
-					logger.debug("Param: "+k.getGenericDeclaration());
-				}
-			}
-		}
+//		List<TypeVariable<?>> parameters = Arrays.asList(getTypeParameters());
+//		for (TypeVariable<?> var : generatorTypes.keySet()) {
+//			if (parameters.contains(var) && !(generatorTypes.get(var) instanceof WildcardType)) {
+//				logger.debug("Parameter "+var+" in map, adding to concrete types: "+generatorTypes.get(var));
+//				concreteTypes.put(var, generatorTypes.get(var));
+//			} else {
+//				logger.debug("Parameter "+var+" not in map, not adding to concrete types: "+generatorTypes.get(var));
+//				logger.debug("Key: "+var.getGenericDeclaration());
+//				for(TypeVariable<?> k : parameters) {
+//					logger.debug("Param: "+k.getGenericDeclaration());
+//				}
+//			}
+//		}
 
 		// When resolving the type variables on a non-static generic method
 		// we need to look at the owner type, and not the return type!
@@ -303,30 +304,32 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 		return owner;
 	}
 
-	public ClassReader.DataType getOwnerType() {
+	public DataType getOwnerType() {
 		return owner.getType();
 	}
 
 	public abstract Class<?> getRawGeneratedType();
 
-	public TypeVariable<?>[] getTypeParameters() {
-		return new TypeVariable<?>[] {};
+	public DataType[] getTypeParameters() {
+		ArrayList<DataType> list = new ArrayList<>();
+		list.add(owner.getType());
+		return list.toArray(new DataType[0]);
 	}
 
-	protected Map<TypeVariable<?>, GenericClass> getTypeVariableMap() {
-		Map<TypeVariable<?>, GenericClass> typeMap = new HashMap<TypeVariable<?>, GenericClass>();
-		int pos = 0;
-		for (TypeVariable<?> variable : getTypeParameters()) {
-			if (typeVariables.size() <= pos)
-				break;
-			typeMap.put(variable, typeVariables.get(pos));
-			pos++;
-		}
+	protected Map<DataType, GenericClass> getTypeVariableMap() {
+		Map<DataType, GenericClass> typeMap = new HashMap<>();
+//		int pos = 0;
+//		for (DataType variable : getTypeParameters()) {
+//			if (typeVariables.size() <= pos)
+//				break;
+//			typeMap.put(variable, typeVariables.get(pos));
+//			pos++;
+//		}
 		return typeMap;
 	}
 
 	public boolean hasTypeParameters() {
-		return getTypeParameters().length != 0;
+		return getTypeParameters() != null;
 	}
 
 	public abstract boolean isAccessible();
@@ -365,21 +368,21 @@ public abstract class GenericAccessibleObject<T extends GenericAccessibleObject<
 	 *            type arguments, or it's a raw type) Class
 	 * @return toMapType, but with type parameters from typeAndParams replaced.
 	 */
-	protected ClassReader.DataType mapTypeParameters(ClassReader.DataType toMapType, ClassReader.DataType typeAndParams) {
+	protected DataType mapTypeParameters(DataType toMapType, DataType typeAndParams) {
 		if (isMissingTypeParameters(typeAndParams)) {
 			logger.debug("Is missing type parameters, so erasing types");
 			return null;
 		} else {
 			VarMap varMap = new VarMap();
-			ClassReader.DataType handlingTypeAndParams = typeAndParams;
+			DataType handlingTypeAndParams = typeAndParams;
 //			while (handlingTypeAndParams instanceof ParameterizedType) {
 //				ParameterizedType pType = (ParameterizedType) handlingTypeAndParams;
 //				Class<?> clazz = (Class<?>) pType.getRawType(); // getRawType should always be Class
 //				//varMap.addAll(clazz.getTypeParameters(), pType.getActualTypeArguments());
 //				handlingTypeAndParams = pType.getOwnerType();
 //			}
-			varMap.addAll(getTypeVariableMap());
-			return varMap.map(toMapType);
+//			varMap.addAll(getTypeVariableMap());
+			return toMapType;
 		}
 	}
 

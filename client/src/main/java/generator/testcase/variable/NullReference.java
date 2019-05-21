@@ -1,6 +1,7 @@
 package generator.testcase.variable;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.TestCase;
 
 import java.lang.reflect.Type;
@@ -14,7 +15,7 @@ public class NullReference extends VariableReferenceImpl {
 
 	private static final long serialVersionUID = -6172885297590386463L;
 
-	public NullReference(TestCase testCase, ClassReader.DataType type) {
+	public NullReference(TestCase testCase, DataType type) {
 		super(testCase, type);
 	}
 

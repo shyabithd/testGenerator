@@ -1,10 +1,15 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
+import generator.testcase.CodeUnderTestException;
+import generator.testcase.Scope;
 import generator.testcase.TestCase;
 import generator.testcase.variable.VariableReference;
+import generator.testcase.variable.VariableReferenceImpl;
 import generator.utils.GenericClass;
 
+import javax.xml.crypto.Data;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,6 +41,11 @@ public abstract class PrimitiveStatement<T> extends AbstractStatement {
         this.value = value;
     }
 
+    public PrimitiveStatement(TestCase tc, DataType type, T value) {
+        super(tc, new VariableReferenceImpl(tc, type));
+        this.value = value;
+    }
+
     /**
      * Access the value
      *
@@ -64,9 +74,11 @@ public abstract class PrimitiveStatement<T> extends AbstractStatement {
         // TODO This kills the benefit of inheritance.
         // Let each class implement the clone method instead
 
-        ClassReader clazz = genericClass.getRawClass();
+        DataType type = genericClass.getType();
         PrimitiveStatement<?> statement = null;
-
+        if (type.getDataType().equals("int")) {
+            statement = new IntPrimitiveStatement(tc);
+        }
         return statement;
     }
 
@@ -191,4 +203,31 @@ public abstract class PrimitiveStatement<T> extends AbstractStatement {
         super.changeClassLoader(loader);
     }
 
+    @Override
+    public Set<VariableReference> getVariableReferences() {
+        Set<VariableReference> references = new LinkedHashSet<>();
+        references.add(retval);
+        return references;
+    }
+
+    @Override
+    public Throwable execute(Scope scope, PrintStream out)
+            throws InvocationTargetException, IllegalArgumentException,
+            IllegalAccessException, InstantiationException {
+        Throwable exceptionThrown = null;
+
+        try {
+            retval.setObject(scope, value);
+        } catch (CodeUnderTestException e) {
+            exceptionThrown = e;
+        }
+        return exceptionThrown;
+    }
+
+    @Override
+    public void replace(VariableReference var1, VariableReference var2) {
+        if (retval.equals(var1)) {
+            retval = var2;
+        }
+    }
 }

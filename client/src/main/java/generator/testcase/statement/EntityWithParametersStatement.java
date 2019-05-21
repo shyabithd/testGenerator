@@ -1,6 +1,7 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.TestCase;
 import generator.testcase.variable.ArrayIndex;
 import generator.testcase.variable.VariableReference;
@@ -18,24 +19,17 @@ public abstract class EntityWithParametersStatement extends AbstractStatement{
 
 	private static final long serialVersionUID = 2971944785047056480L;
 	protected final List<VariableReference> parameters;
-    protected final Annotation[][] parameterAnnotations;
-    protected final Annotation[] annotations;
 
-    protected EntityWithParametersStatement(TestCase tc, ClassReader.DataType type, List<VariableReference> parameters,
-                                            Annotation[] annotations, Annotation[][] parameterAnnotations) throws IllegalArgumentException{
-        super(tc,type);
+    protected EntityWithParametersStatement(TestCase tc, DataType type, VariableReference retval, List<VariableReference> parameters
+                                            ) throws IllegalArgumentException{
+        super(tc,retval);
         this.parameters = parameters;
-        this.annotations = annotations;
-        this.parameterAnnotations = parameterAnnotations;
         validateInputs();
     }
 
-    protected EntityWithParametersStatement(TestCase tc, VariableReference retval, List<VariableReference> parameters,
-                                            Annotation[] annotations, Annotation[][] parameterAnnotations) throws IllegalArgumentException{
-        super(tc);
+    protected EntityWithParametersStatement(TestCase tc, VariableReference retval, List<VariableReference> parameters) throws IllegalArgumentException{
+        super(tc, retval);
         this.parameters = parameters;
-        this.annotations = annotations;
-        this.parameterAnnotations = parameterAnnotations;
         validateInputs();
     }
 
@@ -46,10 +40,8 @@ public abstract class EntityWithParametersStatement extends AbstractStatement{
      * @param retval
      */
     protected EntityWithParametersStatement(TestCase tc, VariableReference retval){
-        super(tc);
+        super(tc, retval);
         this.parameters = new ArrayList<>();
-        this.annotations=null;
-        this.parameterAnnotations=null;
     }
 
     /**
@@ -58,22 +50,15 @@ public abstract class EntityWithParametersStatement extends AbstractStatement{
      * @param tc
      * @param type
      */
-    protected EntityWithParametersStatement(TestCase tc, ClassReader.DataType type){
+    protected EntityWithParametersStatement(TestCase tc, DataType type){
         super(tc, type);
         this.parameters = new ArrayList<>();
-        this.annotations=null;
-        this.parameterAnnotations=null;
     }
 
     private void validateInputs() throws IllegalArgumentException{
         Inputs.checkNull(parameters);
         for(VariableReference ref : parameters){
             Inputs.checkNull(ref);
-        }
-        if(parameterAnnotations!=null){
-            if(parameterAnnotations.length != parameters.size()){
-                throw new IllegalArgumentException("Size mismatched");
-            }
         }
     }
 
@@ -154,10 +139,6 @@ public abstract class EntityWithParametersStatement extends AbstractStatement{
      */
     public boolean isBounded(VariableReference var) throws IllegalArgumentException{
         Inputs.checkNull(var);
-
-        if(parameterAnnotations==null){
-            return false;
-        }
 
         for(int i=0; i<parameters.size(); i++){
             if(parameters.get(i).equals(var)){

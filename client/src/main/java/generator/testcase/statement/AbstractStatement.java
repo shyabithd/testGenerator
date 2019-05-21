@@ -1,13 +1,17 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.assertion.Assertion;
 import generator.testcase.CodeUnderTestException;
+import generator.testcase.Scope;
 import generator.testcase.TestCase;
+import generator.testcase.TestCodeVisitor;
 import generator.testcase.variable.VariableReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -79,7 +83,7 @@ public abstract class AbstractStatement implements Statement, Serializable {
 		this.tc = tc;
 	}
 
-	protected AbstractStatement(TestCase tc, ClassReader.DataType type) throws IllegalArgumentException{
+	protected AbstractStatement(TestCase tc, DataType type) throws IllegalArgumentException{
 		if(tc==null){
 			throw new IllegalArgumentException("tc cannot be null");
 		}
@@ -87,6 +91,17 @@ public abstract class AbstractStatement implements Statement, Serializable {
 			throw new IllegalArgumentException("type cannot be null");
 		}
 
+		this.tc = tc;
+	}
+
+	protected AbstractStatement(TestCase tc, VariableReference retval) throws IllegalArgumentException{
+		if(tc==null){
+			throw new IllegalArgumentException("tc cannot be null");
+		}
+		if(retval==null){
+			throw new IllegalArgumentException("retval cannot be null");
+		}
+		this.retval = retval;
 		this.tc = tc;
 	}
 
@@ -161,7 +176,11 @@ public abstract class AbstractStatement implements Statement, Serializable {
 	/** {@inheritDoc} */
 	@Override
 	public String getCode(Throwable exception) {
-		return null;
+		TestCodeVisitor visitor = new TestCodeVisitor();
+		visitor.setException(this, exception);
+		visitor.visitStatement(this);
+		String code = visitor.getCode();
+		return code.substring(0, code.length() - 2);
 	}
 
 	@Override
@@ -385,4 +404,27 @@ public abstract class AbstractStatement implements Statement, Serializable {
 	public boolean isReflectionStatement() {
 		return false;
 	}
+
+    @Override
+    public VariableReference getReturnValue() {
+	    return retval;
+    }
+
+    @Override
+    public void setRetval(VariableReference newRetVal) {
+        if(newRetVal==null){
+            throw new IllegalArgumentException("newRetVal cannot be null");
+        }
+        this.retval = newRetVal;
+    }
+
+    @Override
+    public Class<?> getReturnClass() {
+        return retval.getVariableClass().getClass();
+    }
+
+    @Override
+    public DataType getReturnType() {
+        return retval.getType();
+    }
 }

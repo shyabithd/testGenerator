@@ -1,9 +1,11 @@
 package generator.testsuite;
 
 import generator.ga.FitnessFunction;
+import generator.ga.stoppingconditions.MaxStatementsStoppingCondition;
 import generator.testcase.ExecutableChromosome;
 import generator.testcase.ExecutionResult;
 import generator.testcase.TestCase;
+import generator.testcase.TestCaseExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +33,8 @@ public abstract class TestSuiteFitnessFunction extends
 		ExecutionResult result = new ExecutionResult(test, null);
 
 		try {
-			//result = TestCaseExecutor.getInstance().execute(test);
-			//MaxStatementsStoppingCondition.statementsExecuted(result.getExecutedStatements());
+			result = TestCaseExecutor.getInstance().execute(test);
+			MaxStatementsStoppingCondition.statementsExecuted(result.getExecutedStatements());
 		} catch (Exception e) {
 			logger.warn("TG: Exception caught: " + e.getMessage(), e);
 			try {

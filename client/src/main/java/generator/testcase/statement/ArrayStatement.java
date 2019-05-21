@@ -1,6 +1,7 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.Properties;
 import generator.assertion.Assertion;
 import generator.testcase.Scope;
@@ -52,7 +53,7 @@ public class ArrayStatement extends AbstractStatement {
 	}
 	/** {@inheritDoc} */
 	@Override
-	public ClassReader.DataType getReturnType() {
+	public DataType getReturnType() {
 		return null;
 	}
 

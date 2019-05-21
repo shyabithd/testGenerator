@@ -81,18 +81,18 @@ public class ReflectionUtils {
     }
   }
 
-  public static ClassReader.Field[] getDeclaredFields(ClassReader clazz) {
+  public static Field[] getDeclaredFields(ClassReader clazz) {
     try {
       return clazz.getDeclaredFields();
     } catch (NoClassDefFoundError e) {
       // TODO: What shall we do?
       logger.info(
           "Error while trying to load declared fields of class " + clazz.getCanonicalName() + ": " + e);
-      return new ClassReader.Field[0];
+      return new Field[0];
     }
   }
 
-  public static ClassReader.Field getDeclaredField(ClassReader clazz, String fieldName) {
+  public static Field getDeclaredField(ClassReader clazz, String fieldName) {
     try {
       return clazz.getDeclaredField(fieldName);
     } catch (NoClassDefFoundError e) {
@@ -102,13 +102,13 @@ public class ReflectionUtils {
     }
   }
 
-  public static ClassReader.Field[] getFields(ClassReader clazz) {
+  public static Field[] getFields(ClassReader clazz) {
     try {
       return clazz.getDeclaredFields();
     } catch (NoClassDefFoundError e) {
       // TODO: What shall we do?
       logger.info("Error while trying to load fields of class " + clazz.getCanonicalName() + ": " + e);
-      return new ClassReader.Field[0];
+      return new Field[0];
     }
   }
 }

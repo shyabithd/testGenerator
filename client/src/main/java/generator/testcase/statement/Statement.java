@@ -1,6 +1,7 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.assertion.Assertion;
 import generator.testcase.Scope;
 import generator.testcase.TestCase;
@@ -176,7 +177,7 @@ public interface Statement {
 	 *
 	 * @return Generic type of return value
 	 */
-	public ClassReader.DataType getReturnType();
+	public DataType getReturnType();
 
 	/**
 	 * Retrieve the test case this statement is part of

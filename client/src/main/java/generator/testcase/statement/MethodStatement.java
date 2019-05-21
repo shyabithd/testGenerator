@@ -1,6 +1,7 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.Properties;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.Scope;
@@ -32,7 +33,7 @@ public class MethodStatement extends EntityWithParametersStatement {
 
 	public MethodStatement(TestCase tc, GenericMethod method, VariableReference callee,
 						   List<VariableReference> parameters) throws IllegalArgumentException {
-		super(tc, method.getReturnType(), parameters, null,null);
+		super(tc, method.getReturnType(), callee, parameters);
 
 		init(method, callee);
 	}
@@ -46,8 +47,7 @@ public class MethodStatement extends EntityWithParametersStatement {
 
 	public MethodStatement(TestCase tc, GenericMethod method, VariableReference callee,
 	        VariableReference retvar, List<VariableReference> parameters) {
-		super(tc, retvar, parameters,
-				null, null);
+		super(tc, retvar, parameters);
 
 		if (retvar.getStPosition() >= tc.size()) {
 			//as an old statement should be replaced by this statement
@@ -157,7 +157,7 @@ public class MethodStatement extends EntityWithParametersStatement {
 				        InstantiationException, CodeUnderTestException {
 					Object callee_object;
 					try {
-						ClassReader.DataType[] parameterTypes = method.getParameterTypes();
+						DataType[] parameterTypes = method.getParameterTypes();
 						for (int i = 0; i < parameters.size(); i++) {
 							VariableReference parameterVar = parameters.get(i);
 							inputs[i] = null;//parameterVar.getObject(scope);
@@ -281,16 +281,6 @@ public class MethodStatement extends EntityWithParametersStatement {
 		return references;
 	}
 
-	@Override
-	public VariableReference getReturnValue() {
-		return null;
-	}
-
-	@Override
-	public void setRetval(VariableReference newRetVal) {
-
-	}
-
 	/* (non-Javadoc)
 	 * @see org.evosuite.testcase.StatementInterface#replace(org.evosuite.testcase.VariableReference, org.evosuite.testcase.VariableReference)
 	 */
@@ -322,7 +312,7 @@ public class MethodStatement extends EntityWithParametersStatement {
 	}
 
 	@Override
-	public ClassReader.DataType getReturnType() {
+	public DataType getReturnType() {
 		return null;
 	}
 

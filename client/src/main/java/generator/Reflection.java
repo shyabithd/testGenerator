@@ -2,7 +2,7 @@ package generator;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
+import generator.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -39,7 +39,7 @@ public class Reflection {
 		return sortArrayInPlace(ReflectionUtils.getMethods(clazz));
 	}
 
-	public static ClassReader.Field[] getFields(ClassReader clazz) throws SecurityException {
+	public static Field[] getFields(ClassReader clazz) throws SecurityException {
 		return sortArrayInPlace(ReflectionUtils.getFields(clazz));
 	}
 
@@ -59,7 +59,7 @@ public class Reflection {
 		return sortArrayInPlace(ReflectionUtils.getDeclaredMethods(clazz));
 	}
 	
-	public static ClassReader.Field[] getDeclaredFields(ClassReader clazz) throws SecurityException {
+	public static Field[] getDeclaredFields(ClassReader clazz) throws SecurityException {
 		return sortArrayInPlace(ReflectionUtils.getDeclaredFields(clazz));
 	}
 
@@ -76,25 +76,25 @@ public class Reflection {
 	}
 
 	public static void setField(Field field, Object sourceObject, Object value) throws IllegalAccessException {
-		if (field.getType().equals(int.class))
-			field.setInt(sourceObject, getIntValue(value));
-		else if (field.getType().equals(boolean.class))
-			field.setBoolean(sourceObject, (Boolean) value);
-		else if (field.getType().equals(byte.class))
-			field.setByte(sourceObject, (byte) getIntValue(value));
-		else if (field.getType().equals(char.class))
-			field.setChar(sourceObject, getCharValue(value));
-		else if (field.getType().equals(double.class))
-			field.setDouble(sourceObject, getDoubleValue(value));
-		else if (field.getType().equals(float.class))
-			field.setFloat(sourceObject, getFloatValue(value));
-		else if (field.getType().equals(long.class))
-			field.setLong(sourceObject, getLongValue(value));
-		else if (field.getType().equals(short.class))
-			field.setShort(sourceObject, (short) getIntValue(value));
-		else {
-			field.set(sourceObject, value);
-		}
+//		if (field.getType().equals(int.class))
+//			field.setInt(sourceObject, getIntValue(value));
+//		else if (field.getType().equals(boolean.class))
+//			field.setBoolean(sourceObject, (Boolean) value);
+//		else if (field.getType().equals(byte.class))
+//			field.setByte(sourceObject, (byte) getIntValue(value));
+//		else if (field.getType().equals(char.class))
+//			field.setChar(sourceObject, getCharValue(value));
+//		else if (field.getType().equals(double.class))
+//			field.setDouble(sourceObject, getDoubleValue(value));
+//		else if (field.getType().equals(float.class))
+//			field.setFloat(sourceObject, getFloatValue(value));
+//		else if (field.getType().equals(long.class))
+//			field.setLong(sourceObject, getLongValue(value));
+//		else if (field.getType().equals(short.class))
+//			field.setShort(sourceObject, (short) getIntValue(value));
+//		else {
+//			field.set(sourceObject, value);
+//		}
 	}
 
 	private static int getIntValue(Object object) {

@@ -1,6 +1,9 @@
 package generator.testcase;
 
 import generator.ClassReader;
+import generator.DataType;
+import generator.Constructor;
+import generator.Field;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,58 +21,16 @@ public class TestUsageChecker {
 
 	private static Logger logger = LoggerFactory.getLogger(TestUsageChecker.class);
 
-	public static boolean canUse(Constructor<?> c) {
-
-		if (c.isSynthetic()) {
-			return false;
-		}
-
-		// synthetic constructors are OK
-		if (Modifier.isAbstract(c.getDeclaringClass().getModifiers()))
-			return false;
-
-		// TODO we could enable some methods from Object, like getClass
-		//if (c.getDeclaringClass().equals(java.lang.Object.class))
-		//	return false;// handled here to avoid printing reasons
-
-		if (c.getDeclaringClass().equals(Thread.class))
-			return false;// handled here to avoid printing reasons
-
-		if (c.getDeclaringClass().isAnonymousClass())
-			return false;
-
-		if (c.getDeclaringClass().isLocalClass()) {
-			logger.debug("Skipping constructor of local class " + c.getName());
-			return false;
-		}
-
-		if (c.getDeclaringClass().isMemberClass() && !TestUsageChecker.canUse(c.getDeclaringClass()))
-			return false;
-
-
-		if (isForbiddenNonDeterministicCall(c)) {
-			return false;
-		}
+	public static boolean canUse(Constructor c) {
 
 		if (Modifier.isPublic(c.getModifiers())) {
-			//TestClusterUtils.makeAccessible(c);
 			return true;
-		}
-
-        // If default access rights, then check if this class is in the same package as the target class
-		if (!Modifier.isPrivate(c.getModifiers())) {
-			//		        && !Modifier.isProtected(c.getModifiers())) {
-			String packageName = ClassUtils.getPackageName(c.getDeclaringClass());
-			if (packageName.equals(Properties.CLASS_PREFIX)) {
-//				TestClusterUtils.makeAccessible(c);
-				return true;
-			}
 		}
 
 		return false;
 	}
 
-    public static boolean canUse(ClassReader.DataType t) {
+    public static boolean canUse(DataType t) {
         // If it's not declared, let's assume it's ok
         return true;
     }
@@ -159,11 +120,11 @@ public class TestUsageChecker {
         return true;
     }
 
-    public static boolean canUse(ClassReader.Field f) {
+    public static boolean canUse(Field f) {
         return canUse(f, null);
     }
 
-    public static boolean canUse(ClassReader.Field f, ClassReader ownerClass) {
+    public static boolean canUse(Field f, DataType ownerClass) {
 
         // TODO we could enable some methods from Object, like getClass
         if (f.getDeclaringClass().equals(Object.class))
@@ -203,94 +164,96 @@ public class TestUsageChecker {
     }
 
     public static boolean canUse(ClassReader.Method m) {
-        return canUse(m, m.getDeclaringClass());
+        return canUse(m, m.getGenericReturnType());
     }
 
-    public static boolean canUse(ClassReader.Method m, ClassReader ownerClass) {
+    public static boolean canUse(ClassReader.Method m, DataType ownerClass) {
 
-        if (m.getDeclaringClass().equals(Object.class)) {
-            return false;
-        }
-
-        if (!m.getReturnType().equals(String.class) && (!canUse(m.getReturnType()))) {
-            return false;
-        }
-
-        if (m.getDeclaringClass().equals(Enum.class)) {
-            return false;
-			/*
-			if (m.getName().equals("valueOf") || m.getName().equals("values")
-			        || m.getName().equals("ordinal")) {
-				logger.debug("Excluding valueOf for Enum " + m.toString());
-				return false;
-			}
-			// Skip compareTo on enums (like Randoop)
-			if (m.getName().equals("compareTo") && m.getParameterTypes().length == 1
-			        && m.getParameterTypes()[0].equals(Enum.class))
-				return false;
-				*/
-        }
-
-        if (m.getDeclaringClass().equals(Thread.class))
-            return false;
-
-        // Hashcode only if we need to cover it
-        if (m.getName().equals("hashCode")) {
-			final Class<?> targetClass = Properties.getTargetClassAndDontInitialise();
-
-            if(!m.getDeclaringClass().equals(targetClass))
-                return false;
-//            else {
-//                if(GraphPool.getInstance(ownerClass.getClassLoader()).getActualCFG(Properties.TARGET_CLASS, m.getName() + Type.getMethodDescriptor(m)) == null) {
-//                    // Don't cover generated hashCode
-//                    // TODO: This should work via annotations
-//                    return false;
-//                }
-//            }
-        }
-
-        // Randoop special case: just clumps together a bunch of hashCodes, so skip it
-        if (m.getName().equals("deepHashCode")
-                && m.getDeclaringClass().equals(Arrays.class))
-            return false;
-
-        // Randoop special case: differs too much between JDK installations
-        if (m.getName().equals("getAvailableLocales"))
-            return false;
-
-//        if (m.getName().equals(ClassResetter.STATIC_RESET)) {
-//            logger.debug("Ignoring static reset method");
+	    return true;
+//
+//        if (m.getDeclaringClass().equals(Object.class)) {
 //            return false;
 //        }
-
-        if (isForbiddenNonDeterministicCall(m)) {
-            return false;
-        }
-
-        if (!Properties.CONSIDER_MAIN_METHODS && m.getName().equals("main")
-                && Modifier.isStatic(m.getModifiers())
-                && Modifier.isPublic(m.getModifiers())) {
-            logger.debug("Ignoring static main method ");
-            return false;
-        }
-
-		/*
-		if(m.getTypeParameters().length > 0) {
-			logger.debug("Cannot handle generic methods at this point");
-			if(m.getDeclaringClass().equals(Properties.getTargetClass())) {
-				LoggingUtils.getEvoLogger().info("* Skipping method "+m.getName()+": generic methods are not handled yet");
-			}
-			return false;
-		}
-		*/
-
-        // If default or
-        if (Modifier.isPublic(m.getModifiers())) {
-//        		TestClusterUtils.makeAccessible(m);
-            return true;
-        }
-
-        return false;
+//
+//        if (!m.getReturnType().equals(String.class) && (!canUse(m.getReturnType()))) {
+//            return false;
+//        }
+//
+//        if (m.getDeclaringClass().equals(Enum.class)) {
+//            return false;
+//			/*
+//			if (m.getName().equals("valueOf") || m.getName().equals("values")
+//			        || m.getName().equals("ordinal")) {
+//				logger.debug("Excluding valueOf for Enum " + m.toString());
+//				return false;
+//			}
+//			// Skip compareTo on enums (like Randoop)
+//			if (m.getName().equals("compareTo") && m.getParameterTypes().length == 1
+//			        && m.getParameterTypes()[0].equals(Enum.class))
+//				return false;
+//				*/
+//        }
+//
+//        if (m.getDeclaringClass().equals(Thread.class))
+//            return false;
+//
+//        // Hashcode only if we need to cover it
+//        if (m.getName().equals("hashCode")) {
+//			final Class<?> targetClass = Properties.getTargetClassAndDontInitialise();
+//
+//            if(!m.getDeclaringClass().equals(targetClass))
+//                return false;
+////            else {
+////                if(GraphPool.getInstance(ownerClass.getClassLoader()).getActualCFG(Properties.TARGET_CLASS, m.getName() + Type.getMethodDescriptor(m)) == null) {
+////                    // Don't cover generated hashCode
+////                    // TODO: This should work via annotations
+////                    return false;
+////                }
+////            }
+//        }
+//
+//        // Randoop special case: just clumps together a bunch of hashCodes, so skip it
+//        if (m.getName().equals("deepHashCode")
+//                && m.getDeclaringClass().equals(Arrays.class))
+//            return false;
+//
+//        // Randoop special case: differs too much between JDK installations
+//        if (m.getName().equals("getAvailableLocales"))
+//            return false;
+//
+////        if (m.getName().equals(ClassResetter.STATIC_RESET)) {
+////            logger.debug("Ignoring static reset method");
+////            return false;
+////        }
+//
+//        if (isForbiddenNonDeterministicCall(m)) {
+//            return false;
+//        }
+//
+//        if (!Properties.CONSIDER_MAIN_METHODS && m.getName().equals("main")
+//                && Modifier.isStatic(m.getModifiers())
+//                && Modifier.isPublic(m.getModifiers())) {
+//            logger.debug("Ignoring static main method ");
+//            return false;
+//        }
+//
+//		/*
+//		if(m.getTypeParameters().length > 0) {
+//			logger.debug("Cannot handle generic methods at this point");
+//			if(m.getDeclaringClass().equals(Properties.getTargetClass())) {
+//				LoggingUtils.getEvoLogger().info("* Skipping method "+m.getName()+": generic methods are not handled yet");
+//			}
+//			return false;
+//		}
+//		*/
+//
+//        // If default or
+//        if (Modifier.isPublic(m.getModifiers())) {
+////        		TestClusterUtils.makeAccessible(m);
+//            return true;
+//        }
+//
+//        return false;
     }
 
 
@@ -349,21 +312,7 @@ public class TestUsageChecker {
 	 * @param c
 	 * @return
 	 */
-	private static boolean isForbiddenNonDeterministicCall(Constructor<?> c) {
-		if (!Properties.REPLACE_CALLS)
-			return false;
-
-		// Date default constructor uses current time
-		if (c.getDeclaringClass().equals(Date.class)) {
-			if (c.getParameterTypes().length == 0)
-				return true;
-		}
-
-		// Random without seed parameter is...random
-		if (c.getDeclaringClass().equals(Random.class)) {
-			if (c.getParameterTypes().length == 0)
-				return true;
-		}
+	private static boolean isForbiddenNonDeterministicCall(Constructor c) {
 
 		return false;
 	}

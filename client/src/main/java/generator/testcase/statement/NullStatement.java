@@ -23,6 +23,7 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.Scope;
 import generator.testcase.TestCase;
 import generator.testcase.variable.NullReference;
@@ -51,7 +52,7 @@ public class NullStatement extends PrimitiveStatement<Void> {
 
 	private static final long serialVersionUID = -7141670041216163032L;
 
-	public NullStatement(TestCase tc, ClassReader.DataType type) {
+	public NullStatement(TestCase tc, DataType type) {
 		super(tc, new NullReference(tc, type), null);
 	}
 
@@ -70,7 +71,7 @@ public class NullStatement extends PrimitiveStatement<Void> {
 	}
 
 	@Override
-	public ClassReader.DataType getReturnType() {
+	public DataType getReturnType() {
 		return null;
 	}
 

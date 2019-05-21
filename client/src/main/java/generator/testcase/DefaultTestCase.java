@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.ListenableList;
 import generator.Listener;
 import generator.assertion.Assertion;
@@ -121,7 +122,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 
 
 	private void addFields(List<VariableReference> variables, VariableReference var,
-						   ClassReader.DataType type) {
+						   DataType type) {
 
 		if (!var.isPrimitive() && !(var instanceof NullReference)) {
 			// add fields of this object to list
@@ -197,6 +198,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 	@Override
 	public VariableReference addStatement(Statement statement, int position) {
 		statements.add(position, statement);
+		statement.getTestCase().toCode();
 		assert (isValid());
 		return statement.getReturnValue();
 	}
@@ -389,13 +391,12 @@ public class DefaultTestCase implements TestCase, Serializable {
 				//accessedClasses.addAll(Arrays.asList(ms.getMethod().getMethod().getParameterTypes()));
 			} else if (s instanceof FieldStatement) {
 				FieldStatement fs = (FieldStatement) s;
-				accessedClasses.add(fs.getField().getField().getDeclaringClass());
+				accessedClasses.add(fs.getField().getField().getClass());
 				accessedClasses.add(fs.getField().getField().getType().getClass());
 			} else if (s instanceof ConstructorStatement) {
 				ConstructorStatement cs = (ConstructorStatement) s;
-				accessedClasses.add(cs.getConstructor().getConstructor().getDeclaringClass());
-				accessedClasses.addAll(Arrays.asList(cs.getConstructor().getConstructor().getExceptionTypes()));
-				accessedClasses.addAll(Arrays.asList(cs.getConstructor().getConstructor().getParameterTypes()));
+				accessedClasses.add(cs.getConstructor().getConstructor().getClassReader().getClass());
+				accessedClasses.addAll(Arrays.asList(cs.getConstructor().getConstructor().getParameterTypes().getClass()));
 			}
 		}
 		return accessedClasses;
@@ -471,12 +472,12 @@ public class DefaultTestCase implements TestCase, Serializable {
 	}
 
 	@Override
-	public VariableReference getLastObject(ClassReader.DataType type) throws ConstructionFailedException {
+	public VariableReference getLastObject(DataType type) throws ConstructionFailedException {
 		return getLastObject(type, 0);
 	}
 
 	@Override
-	public VariableReference getLastObject(ClassReader.DataType type, int position)
+	public VariableReference getLastObject(DataType type, int position)
 			throws ConstructionFailedException {
 		for (int i = statements.size() - 1; i >= position; i--) {
 			Statement statement = statements.get(i);
@@ -528,7 +529,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 	 */
 	/** {@inheritDoc} */
 	@Override
-	public List<VariableReference> getObjects(ClassReader.DataType type, int position) {
+	public List<VariableReference> getObjects(DataType type, int position) {
 		List<VariableReference> variables = new LinkedList<VariableReference>();
 
 		GenericClass genericClass = new GenericClass(type);
@@ -591,7 +592,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 	 */
 	/** {@inheritDoc} */
 	@Override
-	public VariableReference getRandomNonNullNonPrimitiveObject(ClassReader.DataType type, int position)
+	public VariableReference getRandomNonNullNonPrimitiveObject(DataType type, int position)
 			throws ConstructionFailedException {
 		Inputs.checkNull(type);
 
@@ -619,7 +620,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 	 */
 	/** {@inheritDoc} */
 	@Override
-	public VariableReference getRandomNonNullObject(ClassReader.DataType type, int position)
+	public VariableReference getRandomNonNullObject(DataType type, int position)
 			throws ConstructionFailedException {
 		Inputs.checkNull(type);
 
@@ -665,7 +666,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 	 */
 	/** {@inheritDoc} */
 	@Override
-	public VariableReference getRandomObject(ClassReader.DataType type)
+	public VariableReference getRandomObject(DataType type)
 			throws ConstructionFailedException {
 		return getRandomObject(type, statements.size());
 	}
@@ -675,7 +676,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 	 */
 	/** {@inheritDoc} */
 	@Override
-	public VariableReference getRandomObject(ClassReader.DataType type, int position)
+	public VariableReference getRandomObject(DataType type, int position)
 			throws ConstructionFailedException {
 		assert (type != null);
 		List<VariableReference> variables = getObjects(type, position);
@@ -766,7 +767,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 	 */
 	/** {@inheritDoc} */
 	@Override
-	public boolean hasCastableObject(ClassReader.DataType type) {
+	public boolean hasCastableObject(DataType type) {
 		for (Statement st : statements) {
 			if (st.getReturnValue().isAssignableFrom(type)) {
 				return true;
@@ -793,7 +794,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 	 */
 	/** {@inheritDoc} */
 	@Override
-	public boolean hasObject(ClassReader.DataType type, int position) {
+	public boolean hasObject(DataType type, int position) {
 		for (int i = 0; i < position && i < size(); i++) {
 			Statement st = statements.get(i);
 			if (st.getReturnValue() == null)
@@ -958,7 +959,7 @@ public class DefaultTestCase implements TestCase, Serializable {
 //			}
 //		}
 		List<VariableReference> parameters = methodStatement.getParameterReferences();
-		ClassReader.DataType[] parameterTypes = methodStatement.getMethod().getRawParameterTypes();
+		DataType[] parameterTypes = methodStatement.getMethod().getRawParameterTypes();
 		for(int i = 0; i < parameters.size(); i++) {
 			VariableReference param = parameters.get(i);
 			if(param.equals(var) && !parameterTypes[i].getClass().isAssignableFrom(abstractClass)) {
@@ -971,10 +972,10 @@ public class DefaultTestCase implements TestCase, Serializable {
 
 	private boolean constructorNeedsDownCast(ConstructorStatement constructorStatement, VariableReference var, Class<?> abstractClass) {
 		List<VariableReference> parameters = constructorStatement.getParameterReferences();
-		Class<?>[] parameterTypes = constructorStatement.getConstructor().getConstructor().getParameterTypes();
+		DataType[] parameterTypes = constructorStatement.getConstructor().getConstructor().getParameterTypes();
 		for(int i = 0; i < parameters.size(); i++) {
 			VariableReference param = parameters.get(i);
-			if(param.equals(var) && !parameterTypes[i].isAssignableFrom(abstractClass)) {
+			if(param.equals(var)) {//&& !parameterTypes[i].isAssignableFrom(abstractClass)
 				// Need downcast for real
 				return true;
 			}
@@ -1122,10 +1123,9 @@ public class DefaultTestCase implements TestCase, Serializable {
 	/** {@inheritDoc} */
 	@Override
 	public String toCode() {
-//		TestCodeVisitor visitor = new TestCodeVisitor();
-//		accept(visitor);
-//		return visitor.getCode();
-		return "";
+		TestCodeVisitor visitor = new TestCodeVisitor();
+		accept(visitor);
+		return visitor.getCode();
 	}
 
 	/* (non-Javadoc)
@@ -1134,11 +1134,10 @@ public class DefaultTestCase implements TestCase, Serializable {
 	/** {@inheritDoc} */
 	@Override
 	public String toCode(Map<Integer, Throwable> exceptions) {
-//		TestCodeVisitor visitor = new TestCodeVisitor();
-//		visitor.setExceptions(exceptions);
-//		accept(visitor);
-//		return visitor.getCode();
-		return "";
+		TestCodeVisitor visitor = new TestCodeVisitor();
+		visitor.setExceptions(exceptions);
+		accept(visitor);
+		return visitor.getCode();
 	}
 
 	/* (non-Javadoc)

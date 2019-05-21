@@ -2,7 +2,7 @@ package generator;
 
 import generator.utils.Randomness;
 
-import java.lang.reflect.Field;
+import generator.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
 public class ReflectionFactory {
 
     private final ClassReader target;
-    private final List<ClassReader.Field> fields;
+    private final List<Field> fields;
     private final List<ClassReader.Method> methods;
 
 
@@ -41,7 +41,7 @@ public class ReflectionFactory {
             //toSkip = Injector.getAllFieldsToInject(target);
         }
 
-        for(ClassReader.Field f : Reflection.getDeclaredFields(target)){
+        for(Field f : Reflection.getDeclaredFields(target)){
             if(Modifier.isPrivate(f.getModifiers())
                     && (toSkip==null || ! toSkip.contains(f))
                     && !f.getName().equals("serialVersionUID")
@@ -85,7 +85,7 @@ public class ReflectionFactory {
         return Randomness.nextDouble() <= ratio;
     }
 
-    public ClassReader.Field nextField() throws IllegalStateException{
+    public Field nextField() throws IllegalStateException{
         if(fields.isEmpty()){
             throw new IllegalStateException("No private field");
         }

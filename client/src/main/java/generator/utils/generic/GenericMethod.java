@@ -1,6 +1,7 @@
 package generator.utils.generic;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.ga.ConstructionFailedException;
 import generator.testcase.TestUsageChecker;
 import generator.testcase.variable.VariableReference;
@@ -34,7 +35,7 @@ public class GenericMethod extends GenericAccessibleObject<GenericMethod> {
 		Inputs.checkNull(method, type);
 	}
 
-	public GenericMethod(ClassReader.Method method, ClassReader.DataType type) {
+	public GenericMethod(ClassReader.Method method, DataType type) {
 		super(new GenericClass(type));
 		this.method = method;
 		Inputs.checkNull(method, type);
@@ -73,7 +74,7 @@ public class GenericMethod extends GenericAccessibleObject<GenericMethod> {
 		return method.getClass();
 	}
 
-	public ClassReader.DataType[] getParameterTypes() {
+	public DataType[] getParameterTypes() {
 		return getExactParameterTypes(method, owner.getType());
 	}
 
@@ -84,28 +85,28 @@ public class GenericMethod extends GenericAccessibleObject<GenericMethod> {
 			logger.debug("Parameter types: " + Arrays.asList(method.getGenericParameterTypes()));
 		}
 
-		for (ClassReader.DataType parameterType : getParameterTypes()) {
+		for (DataType parameterType : getParameterTypes()) {
 			logger.debug("Adding parameter: {}", parameterType);
 			parameters.add(new GenericClass(parameterType));
 		}
 		return parameters;
 	}
 
-	public ClassReader.DataType[] getGenericParameterTypes() {
+	public DataType[] getGenericParameterTypes() {
 		return method.getGenericParameterTypes();
 	}
 
-	public ClassReader.DataType[] getRawParameterTypes() {
+	public DataType[] getRawParameterTypes() {
 		return method.getParameterTypes();
 	}
 
 	@Override
-	public ClassReader.DataType getGeneratedType() {
+	public DataType getGeneratedType() {
 		return getReturnType();
 	}
 
-	public ClassReader.DataType getReturnType() {
-		ClassReader.DataType returnType = getExactReturnType(method, owner.getType());
+	public DataType getReturnType() {
+		DataType returnType = getExactReturnType(method, owner.getType());
 		if (returnType == null) {
 			LoggingUtils.getGeneratorLogger().info("Exact return type is null for {} with owner {}",method, owner);
 			for (StackTraceElement elem : Thread.currentThread().getStackTrace()) {
@@ -119,7 +120,7 @@ public class GenericMethod extends GenericAccessibleObject<GenericMethod> {
 	}
 
 	@Override
-	public ClassReader.DataType getGenericGeneratedType() {
+	public DataType getGenericGeneratedType() {
 		return method.getGenericReturnType();
 	}
 
@@ -134,11 +135,11 @@ public class GenericMethod extends GenericAccessibleObject<GenericMethod> {
 	 * was declared in a superclass, or <tt>type</tt> has a type parameter that
 	 * is used in the return type, or <tt>type</tt> is a raw type.
 	 */
-	protected ClassReader.DataType getExactReturnType(ClassReader.Method m, ClassReader.DataType type) throws IllegalArgumentException{
+	protected DataType getExactReturnType(ClassReader.Method m, DataType type) throws IllegalArgumentException{
 		Inputs.checkNull(m,type);
 
-		ClassReader.DataType returnType = m.getGenericReturnType();
-		ClassReader.DataType exactDeclaringType = null;
+		DataType returnType = m.getGenericReturnType();
+		DataType exactDeclaringType = null;
 
 		if (exactDeclaringType == null) { // capture(type) is not a subtype of m.getDeclaringClass()
 			logger.info("The method " + m + " is not a member of type " + type
@@ -161,16 +162,16 @@ public class GenericMethod extends GenericAccessibleObject<GenericMethod> {
 	 * parameter that is used in one of the parameters, or <tt>type</tt> is a
 	 * raw type.
 	 */
-	public ClassReader.DataType[] getExactParameterTypes(ClassReader.Method m, ClassReader.DataType type) {
-		ClassReader.DataType[] parameterTypes = m.getGenericParameterTypes();
-		ClassReader.DataType exactDeclaringType = null;
+	public DataType[] getExactParameterTypes(ClassReader.Method m, DataType type) {
+		DataType[] parameterTypes = m.getGenericParameterTypes();
+		DataType exactDeclaringType = null;
 		if (exactDeclaringType == null) { // capture(type) is not a subtype of m.getDeclaringClass()
 			logger.info("The method " + m + " is not a member of type " + type
 			        + " - declared in " + m.getDeclaringClass());
 			return m.getParameterTypes();
 		}
 
-		ClassReader.DataType[] result = new ClassReader.DataType[parameterTypes.length];
+		DataType[] result = new DataType[parameterTypes.length];
 		for (int i = 0; i < parameterTypes.length; i++) {
 			result[i] = mapTypeParameters(parameterTypes[i], exactDeclaringType);
 		}
@@ -178,7 +179,7 @@ public class GenericMethod extends GenericAccessibleObject<GenericMethod> {
 	}
 
 	@Override
-	public TypeVariable<?>[] getTypeParameters() {
+	public DataType[] getTypeParameters() {
 		return method.getTypeParameters();
 	}
 

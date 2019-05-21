@@ -1,5 +1,6 @@
 package generator.testcase.mutation;
 
+import generator.setup.TestCluster;
 import generator.testcase.TestCase;
 import generator.testcase.TestFactory;
 import generator.testcase.statement.PrimitiveStatement;
@@ -41,11 +42,11 @@ public class RandomInsertion implements InsertionStrategy {
 		assert Properties.INSERTION_UUT + Properties.INSERTION_ENVIRONMENT + Properties.INSERTION_PARAMETER == 1.0;
 
 		boolean insertUUT = Properties.INSERTION_UUT > 0 &&
-				r <= Properties.INSERTION_UUT;// && TestCluster.getInstance().getNumTestCalls() > 0 ;
+				r <= Properties.INSERTION_UUT && TestCluster.getInstance().getNumTestCalls() > 0 ;
 
 		boolean insertEnv = !insertUUT && Properties.INSERTION_ENVIRONMENT > 0 &&
-				r > Properties.INSERTION_UUT && r <= Properties.INSERTION_UUT+Properties.INSERTION_ENVIRONMENT;// &&
-				//TestCluster.getInstance().getNumOfEnvironmentCalls() > 0;
+				r > Properties.INSERTION_UUT && r <= Properties.INSERTION_UUT+Properties.INSERTION_ENVIRONMENT &&
+				TestCluster.getInstance().getNumOfEnvironmentCalls() > 0;
 
 		boolean insertParam = !insertUUT && !insertEnv;
 

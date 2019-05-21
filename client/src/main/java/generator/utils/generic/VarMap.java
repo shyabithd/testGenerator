@@ -1,6 +1,7 @@
 package generator.utils.generic;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.utils.GenericClass;
 import utils.Inputs;
 
@@ -15,7 +16,7 @@ import java.util.Map.Entry;
  */
 public class VarMap {
 
-	private final Map<TypeVariable<?>, ClassReader.DataType> map = new LinkedHashMap<>();
+	private final Map<TypeVariable<?>, DataType> map = new LinkedHashMap<>();
 
 	/**
 	 * Creates an empty VarMap
@@ -23,11 +24,11 @@ public class VarMap {
 	public VarMap() {
 	}
 
-	public void add(TypeVariable<?> variable, ClassReader.DataType value) {
+	public void add(TypeVariable<?> variable, DataType value) {
 		map.put(variable, value);
 	}
 
-	public void addAll(TypeVariable<?>[] variables, ClassReader.DataType[] values) throws IllegalArgumentException{
+	public void addAll(TypeVariable<?>[] variables, DataType[] values) throws IllegalArgumentException{
 		Inputs.checkNull(variables,values);
 		if(variables.length != values.length) {
 			throw new IllegalArgumentException("Array length mismatch");
@@ -46,15 +47,15 @@ public class VarMap {
 	}
 
 
-	public ClassReader.DataType map(ClassReader.DataType type) throws IllegalArgumentException{
+	public DataType map(DataType type) throws IllegalArgumentException{
 		Inputs.checkNull(type);
 
 		return type;
 	}
 
-	public ClassReader.DataType[] map(ClassReader.DataType[] types) throws IllegalArgumentException{
+	public DataType[] map(DataType[] types) throws IllegalArgumentException{
 		Inputs.checkNull(types);
-		ClassReader.DataType[] result = new ClassReader.DataType[types.length];
+		DataType[] result = new DataType[types.length];
 		for (int i = 0; i < types.length; i++) {
 			result[i] = map(types[i]);
 		}

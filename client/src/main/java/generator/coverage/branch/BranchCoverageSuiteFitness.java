@@ -1,5 +1,7 @@
 package generator.coverage.branch;
 
+import generator.ClassReader;
+import generator.TestGenerationContext;
 import generator.ga.archive.Archive;
 import generator.testcase.ExecutableChromosome;
 import generator.testcase.ExecutionResult;
@@ -70,9 +72,13 @@ public class BranchCoverageSuiteFitness extends TestSuiteFitnessFunction {
 
 		totalMethods = 0;
 		totalBranches = 0;
-		branchlessMethods = null;
-		methods = null;
-
+		branchlessMethods = new HashSet<>();
+		methods = new HashSet<>();
+		ClassReader.Method[] methods = TestGenerationContext.getInstance().getClassReader().getDeclaredMethods();
+		for(ClassReader.Method method : methods) {
+			this.methods.add(method.methodName);
+			this.branchlessMethods.add(method.methodName);
+		}
 		branchesId = new LinkedHashSet<>();
 
 		determineCoverageGoals();

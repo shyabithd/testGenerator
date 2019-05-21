@@ -1,6 +1,7 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.Properties;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.Scope;
@@ -114,7 +115,7 @@ public class FieldStatement extends AbstractStatement {
 	}
 
 	@Override
-	public ClassReader.DataType getReturnType() {
+	public DataType getReturnType() {
 		return null;
 	}
 

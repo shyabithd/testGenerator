@@ -1,6 +1,8 @@
 package generator.utils.generic;
 
 import generator.ClassReader;
+import generator.DataType;
+import generator.Field;
 import generator.ga.ConstructionFailedException;
 import generator.utils.GenericClass;
 import org.apache.commons.lang3.ArrayUtils;
@@ -13,18 +15,19 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 
 	private static final long serialVersionUID = -2344346234923642901L;
 
-	private transient ClassReader.Field field;
+	private transient Field field;
 
-	public GenericField(ClassReader.Field field, GenericClass owner) {
+	public GenericField(Field field, GenericClass owner) {
 		super(new GenericClass(owner));
 		this.field = field;
 	}
 
-	public GenericField(ClassReader.Field field, ClassReader owner) {
+	public GenericField(Field field, ClassReader owner) {
 		super(new GenericClass(owner));
+		this.field = field;
 	}
 
-	public GenericField(ClassReader.Field field, ClassReader.DataType owner) {
+	public GenericField(Field field, DataType owner) {
 		super(new GenericClass(owner));
 		this.field = field;
 	}
@@ -59,10 +62,10 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 	}
 
 	@Override
-	public TypeVariable<?>[] getTypeParameters() {
+	public DataType[] getTypeParameters() {
 
 		if(field.getGenericType() instanceof TypeVariable) {
-			return ArrayUtils.toArray((TypeVariable<?>)field.getGenericType());
+			return ArrayUtils.toArray(field.getGenericType());
 		} else {
 			return super.getTypeParameters();
 		}
@@ -73,7 +76,7 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 		return new GenericField(field, new GenericClass(owner));
 	}
 
-	public ClassReader.Field getField() {
+	public Field getField() {
 		return field;
 	}
 
@@ -90,7 +93,7 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 	}
 
 	@Override
-	public ClassReader.DataType getGeneratedType() {
+	public DataType getGeneratedType() {
 		return getFieldType();
 	}
 
@@ -100,11 +103,11 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 	}
 
 	@Override
-	public ClassReader.DataType getGenericGeneratedType() {
-		return (ClassReader.DataType) field.getGenericType();
+	public DataType getGenericGeneratedType() {
+		return (DataType) field.getGenericType();
 	}
 
-	public ClassReader.DataType getFieldType() {
+	public DataType getFieldType() {
 //		return GenericTypeReflector.getExactFieldType(field, owner.getType());
 		// 		try {
 		// fieldType = field.getGenericType();
@@ -115,7 +118,7 @@ public class GenericField extends GenericAccessibleObject<GenericField> {
 		return null;
 	}
 
-	public ClassReader.DataType getGenericFieldType() {
+	public DataType getGenericFieldType() {
 		return field.getGenericType();
 	}
 

@@ -89,6 +89,7 @@ public class WholeTestSuiteStrategy extends TestGenerationStrategy {
 			algorithm.generateSolution();
 			// TODO: Refactor MOO!
 			// bestSuites = (List<TestSuiteChromosome>) ga.getBestIndividuals();
+			algorithm.toString();
 			testSuite = (TestSuiteChromosome) algorithm.getBestIndividual();
 		} else {
 			zeroFitness.setFinished();

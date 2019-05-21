@@ -1,10 +1,11 @@
 package generator.utils.generic;
 
 import generator.ClassReader;
+import generator.DataType;
+import generator.Constructor;
 import generator.testcase.TestUsageChecker;
 import generator.testcase.variable.VariableReference;
 import generator.utils.GenericClass;
-import generator.utils.LoggingUtils;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -20,19 +21,19 @@ public class GenericConstructor extends GenericAccessibleObject<GenericConstruct
 
 	private static final long serialVersionUID = 1361882947700615341L;
 
-	private transient Constructor<?> constructor;
+	private transient Constructor constructor;
 
-	public GenericConstructor(Constructor<?> constructor, ClassReader clazz) {
+	public GenericConstructor(Constructor constructor, ClassReader clazz) {
 		super(new GenericClass(clazz));
 		this.constructor = constructor;
 	}
 
-	public GenericConstructor(Constructor<?> constructor, GenericClass owner) {
+	public GenericConstructor(Constructor constructor, GenericClass owner) {
 		super(new GenericClass(owner));
 		this.constructor = constructor;
 	}
 
-	public GenericConstructor(Constructor<?> constructor, ClassReader.DataType type) {
+	public GenericConstructor(Constructor constructor, DataType type) {
 		super(new GenericClass(type));
 		this.constructor = constructor;
 	}
@@ -59,7 +60,7 @@ public class GenericConstructor extends GenericAccessibleObject<GenericConstruct
 		return copy;
 	}
 
-	public Constructor<?> getConstructor() {
+	public Constructor getConstructor() {
 		return constructor;
 	}
 
@@ -69,7 +70,7 @@ public class GenericConstructor extends GenericAccessibleObject<GenericConstruct
 	 */
 	@Override
 	public Class<?> getDeclaringClass() {
-		return constructor.getDeclaringClass();
+		return constructor.getClass();
 	}
 
 	/**
@@ -79,31 +80,29 @@ public class GenericConstructor extends GenericAccessibleObject<GenericConstruct
 	 * parameter that is used in one of the parameters, or <tt>type</tt> is a
 	 * raw type.
 	 */
-	public ClassReader.DataType[] getExactParameterTypes(Constructor<?> m, ClassReader.DataType type) {
-		ClassReader.DataType[] parameterTypes = null; //m.getGenericParameterTypes();
-
-
-		ClassReader.DataType[] result = new ClassReader.DataType[parameterTypes.length];
+	public DataType[] getExactParameterTypes(Constructor m, DataType type) {
+		DataType[] parameterTypes = m.getGenericParameterTypes();
+		DataType[] result = new DataType[parameterTypes.length];
 
 		return result;
 	}
 
-	public ClassReader.DataType[] getGenericParameterTypes() {
-		return (ClassReader.DataType[]) constructor.getGenericParameterTypes();
+	public DataType[] getGenericParameterTypes() {
+		return constructor.getGenericParameterTypes();
 	}
 
 	@Override
-	public ClassReader.DataType getGeneratedType() {
+	public DataType getGeneratedType() {
 		return getReturnType();
 	}
 
 	@Override
 	public Class<?> getRawGeneratedType() {
-		return constructor.getDeclaringClass();
+		return constructor.getClass();
 	}
 
 	@Override
-	public ClassReader.DataType getGenericGeneratedType() {
+	public DataType getGenericGeneratedType() {
 		return null;
 	}
 
@@ -128,35 +127,35 @@ public class GenericConstructor extends GenericAccessibleObject<GenericConstruct
 		return constructor.getGenericParameterTypes().length;
 	}
 
-	public ClassReader.DataType[] getParameterTypes() {
-		ClassReader.DataType[] types = getExactParameterTypes(constructor, owner.getType());
-		ClassReader.DataType[] rawTypes = null;//constructor.getParameterTypes();
+	public DataType[] getParameterTypes() {
+		DataType[] types = getExactParameterTypes(constructor, owner.getType());
+		DataType[] rawTypes = constructor.getParameterTypes();
 
 		// Generic member classes should have the enclosing instance as a parameter
 		// but don't for some reason
 		if (rawTypes.length != types.length && owner.isParameterizedType()) {
-			ClassReader.DataType[] actualTypes = new ClassReader.DataType[rawTypes.length];
+			DataType[] actualTypes = new DataType[rawTypes.length];
 			actualTypes[0] = owner.getOwnerType().getType();
 			int pos = 1;
-			for (ClassReader.DataType parameterType : types) {
+			for (DataType parameterType : types) {
 				actualTypes[pos++] = parameterType;
 			}
 			return actualTypes;
 		}
-		return types;
+		return rawTypes;
 	}
 
-	public ClassReader.DataType[] getRawParameterTypes() {
+	public DataType[] getRawParameterTypes() {
 		return null;
 	}
 
-	public ClassReader.DataType getReturnType() {
+	public DataType getReturnType() {
 		return owner.getType();
 	}
 
 	@Override
-	public TypeVariable<?>[] getTypeParameters() {
-		return constructor.getTypeParameters();
+	public DataType[] getTypeParameters() {
+		return null;
 	}
 
 	@Override
@@ -178,13 +177,13 @@ public class GenericConstructor extends GenericAccessibleObject<GenericConstruct
 	}
 
 	public boolean isOverloaded(List<VariableReference> parameters) {
-		Class<?> declaringClass = constructor.getDeclaringClass();
-		Class<?>[] parameterTypes = constructor.getParameterTypes();
+		Class<?> declaringClass = constructor.getClassReader().getClass();
+		DataType[] parameterTypes = constructor.getParameterTypes();
 		boolean isExact = true;
-		Class<?>[] parameterClasses = new Class<?>[parameters.size()];
+		DataType[] parameterClasses = new DataType[parameters.size()];
 		int num = 0;
 		for (VariableReference parameter : parameters) {
-			//parameterClasses[num] = parameter.getVariableClass();
+			parameterClasses[num] = parameter.getVariableClass();
 			if (!parameterClasses[num].equals(parameterTypes[num])) {
 				isExact = false;
 				break;
@@ -192,31 +191,31 @@ public class GenericConstructor extends GenericAccessibleObject<GenericConstruct
 		}
 		if (isExact)
 			return false;
-		try {
-			for(Constructor<?> otherConstructor: declaringClass.getConstructors()) {
-				if (otherConstructor.equals(constructor))
-					continue;
-
-				// If the number of parameters is different we can uniquely identify the constructor
-				if(parameterTypes.length != otherConstructor.getParameterCount())
-					continue;
-
-				// Only if the parameters are assignable to both constructors do we need to care about overloading
-				boolean parametersEqual = true;
-				Class<?>[] otherParameterTypes = otherConstructor.getParameterTypes();
-				for(int i = 0; i < parameterClasses.length; i++) {
-//					if(parameters.get(i).isAssignableTo(parameterTypes[i]) !=
-//					   parameters.get(i).isAssignableTo(otherParameterTypes[i])) {
-//						parametersEqual = false;
-//						break;
-//					}
-				}
-				if(parametersEqual) {
-					return true;
-				}
-			}
-		} catch (SecurityException e) {
-		}
+//		try {
+//			for(Constructor otherConstructor: declaringClass.getConstructors()) {
+//				if (otherConstructor.equals(constructor))
+//					continue;
+//
+//				// If the number of parameters is different we can uniquely identify the constructor
+//				if(parameterTypes.length != otherConstructor.getParameterCount())
+//					continue;
+//
+//				// Only if the parameters are assignable to both constructors do we need to care about overloading
+//				boolean parametersEqual = true;
+//				Class<?>[] otherParameterTypes = otherConstructor.getParameterTypes();
+//				for(int i = 0; i < parameterClasses.length; i++) {
+////					if(parameters.get(i).isAssignableTo(parameterTypes[i]) !=
+////					   parameters.get(i).isAssignableTo(otherParameterTypes[i])) {
+////						parametersEqual = false;
+////						break;
+////					}
+//				}
+//				if(parametersEqual) {
+//					return true;
+//				}
+//			}
+//		} catch (SecurityException e) {
+//		}
 
 		return false;
 	}
@@ -234,13 +233,13 @@ public class GenericConstructor extends GenericAccessibleObject<GenericConstruct
 	 */
 	@Override
 	public String toString() {
-		return constructor.toGenericString();
+		return constructor.getName();
 	}
 
 	private void writeObject(ObjectOutputStream oos) throws IOException {
 		oos.defaultWriteObject();
 		// Write/save additional fields
-		oos.writeObject(constructor.getDeclaringClass().getName());
+		oos.writeObject(constructor.getClassReader().getClassName());
 	}
 
 	@Override

@@ -1,13 +1,17 @@
 package generator.testcase.variable;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.Scope;
 import generator.testcase.TestCase;
+import generator.testcase.statement.Statement;
 import generator.utils.GenericClass;
+import generator.utils.PassiveChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.crypto.Data;
 import java.lang.reflect.Type;
 
 public class VariableReferenceImpl implements VariableReference {
@@ -17,7 +21,7 @@ public class VariableReferenceImpl implements VariableReference {
 	private int distance = 0;
 
 	private static final Logger logger = LoggerFactory.getLogger(VariableReferenceImpl.class);
-
+	protected final PassiveChangeListener<Void> changeListener = new PassiveChangeListener<Void>();
 	/**
 	 * Type (class) of the variable
 	 */
@@ -41,9 +45,10 @@ public class VariableReferenceImpl implements VariableReference {
 	public VariableReferenceImpl(TestCase testCase, GenericClass type) {
 		this.testCase = testCase;
 		this.type = type;
+		testCase.addListener(changeListener);
 	}
 
-	public VariableReferenceImpl(TestCase testCase, ClassReader.DataType type) {
+	public VariableReferenceImpl(TestCase testCase, DataType type) {
 		this(testCase, new GenericClass(type));
 	}
 
@@ -58,27 +63,27 @@ public class VariableReferenceImpl implements VariableReference {
 	 */
 	@Override
 	public synchronized int getStPosition() {
-//		if (stPosition == null || changeListener.hasChanged()) {
-//			stPosition = null;
-//			for (int i = 0; i < testCase.size(); i++) {
-//				Statement stmt = testCase.getStatement(i);
-//				if (stmt.getReturnValue().equals(this)) {
-//					stPosition = i;
-//					break;
-//				}
-//			}
-//			if (stPosition == null) {
-//				String msg = "Bloody annoying bug \n";
-//				msg += "Test case has " + testCase.size() + " function calls \n";
-//				for (int i = 0; i < testCase.size(); i++) {
-//					msg += testCase.getStatement(i).getCode(null) + "\n";
-//				}
-//				msg += "failed to find type " + this.type.getTypeName() + "\n";
-//
-//				throw new AssertionError(
-//				        msg + "A VariableReferences position is only defined if the VariableReference is defined by a statement in the testCase");
-//			}
-//		} else
+		if (stPosition == null || changeListener.hasChanged()) {
+			stPosition = null;
+			for (int i = 0; i < testCase.size(); i++) {
+				Statement stmt = testCase.getStatement(i);
+				if (stmt.getReturnValue().equals(this)) {
+					stPosition = i;
+					break;
+				}
+			}
+			if (stPosition == null) {
+				String msg = "Bloody annoying bug \n";
+				msg += "Test case has " + testCase.size() + " function calls \n";
+				for (int i = 0; i < testCase.size(); i++) {
+					msg += testCase.getStatement(i).getCode(null) + "\n";
+				}
+				msg += "failed to find type " + this.type.getTypeName() + "\n";
+
+				throw new AssertionError(
+				        msg + "A VariableReferences position is only defined if the VariableReference is defined by a statement in the testCase");
+			}
+		} else
 			{
 			int position = stPosition; //somehow this could be null, leading to NPE. Synchronization issue?
 			stPosition = null;
@@ -135,7 +140,7 @@ public class VariableReferenceImpl implements VariableReference {
 	@Override
 	public String getSimpleClassName() {
 		// TODO: Workaround for bug in commons lang
-		return "";
+		return type.getTypeName();
 	}
 
 	/**
@@ -156,7 +161,7 @@ public class VariableReferenceImpl implements VariableReference {
 
 	/** {@inheritDoc} */
 	@Override
-	public ClassReader.DataType getComponentType() {
+	public DataType getComponentType() {
 		return null;
 	}
 
@@ -239,7 +244,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Return true if other type can be assigned to this variable
 	 */
 	@Override
-	public boolean isAssignableFrom(ClassReader.DataType other) {
+	public boolean isAssignableFrom(DataType other) {
 		return type.isAssignableFrom(other);
 	}
 
@@ -249,7 +254,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Return true if this variable can by assigned to a variable of other type
 	 */
 	@Override
-	public boolean isAssignableTo(ClassReader.DataType other) {
+	public boolean isAssignableTo(DataType other) {
 		//if (type.hasWildcardTypes()) {
 		//	GenericClass rawClass = new GenericClass(other);
 		//	logger.warn("Getting raw assignables for: "+other +" and "+type);
@@ -287,7 +292,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Return type of this variable
 	 */
 	@Override
-	public ClassReader.DataType getType() {
+	public DataType getType() {
 		return type.getType();
 	}
 
@@ -297,7 +302,7 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Set type of this variable
 	 */
 	@Override
-	public void setType(ClassReader.DataType type) {
+	public void setType(DataType type) {
 		this.type = new GenericClass(type);
 	}
 
@@ -307,8 +312,8 @@ public class VariableReferenceImpl implements VariableReference {
 	 * Return raw class of this variable
 	 */
 	@Override
-	public ClassReader getVariableClass() {
-		return type.getRawClass();
+	public DataType getVariableClass() {
+		return type.getType();
 	}
 
 	/**
@@ -429,7 +434,12 @@ public class VariableReferenceImpl implements VariableReference {
 
 	@Override
 	public Object getObject(Scope scope) throws CodeUnderTestException {
-		return null;
+		return scope.getObject(this);
+	}
+
+	@Override
+	public void setObject(Scope scope, Object value) throws CodeUnderTestException {
+		scope.setObject(this, value);
 	}
 
 	/* (non-Javadoc)
@@ -472,7 +482,7 @@ public class VariableReferenceImpl implements VariableReference {
 
 	@Override
 	public GenericClass getGenericClass() {
-		return null;
+		return type;
 	}
 
 	/* (non-Javadoc)

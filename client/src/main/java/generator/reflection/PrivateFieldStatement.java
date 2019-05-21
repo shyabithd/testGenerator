@@ -14,7 +14,7 @@ import generator.utils.GenericClass;
 import generator.utils.generic.GenericMethod;
 
 import java.io.PrintStream;
-import java.lang.reflect.Field;
+import generator.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -78,7 +78,7 @@ public class PrivateFieldStatement extends MethodStatement {
     }
 
     private void determineIfFieldIsStatic(ClassReader klass, String fieldName) {
-            ClassReader.Field f = klass.getDeclaredField(fieldName);
+            Field f = klass.getDeclaredField(fieldName);
             if (Modifier.isStatic(f.getModifiers()))
                 isStaticField = true;
     }

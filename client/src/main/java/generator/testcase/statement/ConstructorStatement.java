@@ -1,12 +1,14 @@
 package generator.testcase.statement;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.testcase.CodeUnderTestException;
 import generator.testcase.Scope;
 import generator.testcase.TestCase;
 import generator.testcase.TestFactory;
 import generator.testcase.variable.VariableReference;
 import generator.Properties;
+import generator.testcase.variable.VariableReferenceImpl;
 import generator.utils.Randomness;
 import generator.utils.generic.GenericConstructor;
 import org.apache.commons.lang3.ClassUtils;
@@ -30,12 +32,12 @@ public class ConstructorStatement extends EntityWithParametersStatement {
 
 	public ConstructorStatement(TestCase tc, GenericConstructor constructor,
 								List<VariableReference> parameters) {
-		super(tc, (ClassReader.DataType) null);
+		super(tc, new VariableReferenceImpl(tc, constructor.getOwnerClass()), parameters);
 		this.constructor = constructor;
 	}
 
     public ConstructorStatement(TestCase test, GenericConstructor constructor, VariableReference retval, List<VariableReference> parameters) {
-        super(test, (ClassReader.DataType) null);
+		super(test, retval, parameters);
     }
 
 
@@ -80,16 +82,6 @@ public class ConstructorStatement extends EntityWithParametersStatement {
 	}
 
 	// TODO: Handle inner classes (need instance parameter for newInstance)
-
-	@Override
-	public VariableReference getReturnValue() {
-		return null;
-	}
-
-	@Override
-	public void setRetval(VariableReference newRetVal) {
-
-	}
 
 	/** {@inheritDoc} */
 	@Override
@@ -171,16 +163,6 @@ public class ConstructorStatement extends EntityWithParametersStatement {
 	@Override
 	public int getNumParameters() {
 		return parameters.size();
-	}
-
-	@Override
-	public Class<?> getReturnClass() {
-		return null;
-	}
-
-	@Override
-	public ClassReader.DataType getReturnType() {
-		return null;
 	}
 
 
@@ -333,9 +315,8 @@ public class ConstructorStatement extends EntityWithParametersStatement {
 	}
 
 	@Override
-	public String toString()
-	{
-		return "";
+	public String toString() {
+		return constructor.getName();
 	}
 
 	@Override

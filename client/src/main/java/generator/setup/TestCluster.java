@@ -1,6 +1,7 @@
 package generator.setup;
 
 import generator.ClassReader;
+import generator.DataType;
 import generator.TestGenerationContext;
 import generator.ga.ConstructionFailedException;
 import generator.ga.archive.Archive;
@@ -51,7 +52,7 @@ public class TestCluster {
 	private final Set<GenericAccessibleObject<?>> environmentMethods;
 
 	/** Static information about how to generate types */
-	private final static Map<GenericClass, Set<GenericAccessibleObject<?>>> generators = new LinkedHashMap<>();
+	private final static HashMap<GenericClass, Set<GenericAccessibleObject<?>>> generators = new LinkedHashMap<>();
 
 	/** Cached information about how to generate types */
 	private final static Map<GenericClass, Set<GenericAccessibleObject<?>>> generatorCache = new LinkedHashMap<>();
@@ -1142,7 +1143,7 @@ public class TestCluster {
 	 */
 	private boolean doesTestHaveSUTInstance(TestCase test) {
 		return true;
-		//return test.hasObject(Properties.getInitializedTargetClass(), test.size());
+		//return test.hasObject(Properties.getTargetClassRegression(false), test.size());
 	}
 
 	/**
@@ -1304,7 +1305,7 @@ public class TestCluster {
 	 * @param type
 	 * @return
 	 */
-	public boolean hasGenerator(ClassReader.DataType type) {
+	public boolean hasGenerator(DataType type) {
 		return hasGenerator(new GenericClass(type));
 	}
 

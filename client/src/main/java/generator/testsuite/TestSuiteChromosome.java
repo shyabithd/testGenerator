@@ -113,6 +113,11 @@ public class TestSuiteChromosome extends AbstractTestSuiteChromosome<TestChromos
 	 */
 	public void deleteTest(TestCase testCase) {
 		if (testCase != null) {
+			for (int i = 0; i < tests.size(); i++) {
+				if (tests.get(i).getTestCase().equals((testCase))) {
+					tests.remove(i);
+				}
+			}
 		}
 	}
 
@@ -125,7 +130,9 @@ public class TestSuiteChromosome extends AbstractTestSuiteChromosome<TestChromos
 	 */
 	public List<TestCase> getTests() {
 		List<TestCase> testcases = new ArrayList<TestCase>();
-
+		for (TestChromosome test : tests) {
+			testcases.add(test.getTestCase());
+		}
 		return testcases;
 	}
 
