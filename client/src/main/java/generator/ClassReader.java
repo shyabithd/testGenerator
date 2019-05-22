@@ -330,6 +330,14 @@ public class ClassReader {
 
             public int visit(IASTDeclaration declaration) {
                 //System.out.println("declaration: " + declaration + " ->  " + declaration.getRawSignature());
+                if (declaration.getRawSignature().contains("private"))
+                {
+                    isPrivate = true;
+                }
+                else if (declaration.getRawSignature().contains("public"))
+                {
+                    isPrivate = false;
+                }
                 if ((declaration instanceof IASTSimpleDeclaration)) {
                     IASTSimpleDeclaration ast = (IASTSimpleDeclaration) declaration;
                     try {
@@ -343,12 +351,25 @@ public class ClassReader {
                             String dataType = ast.getSyntax().getImage();
                             if(definedclassName.equals(dataType)) {
                                 List<Parameter> parameters = new ArrayList<>();
+                                String paramList = "";
+                                String callList = "";
                                 for (ICPPASTParameterDeclaration parameterDeclaration : ((CPPASTFunctionDeclarator) ast.getChildren()[1]).getParameters()) {
                                     Parameter parameter = new Parameter();
                                     parameter.type = new DataType(parameterDeclaration.getChildren()[0].getRawSignature(), classReader);
                                     parameter.variableName = parameterDeclaration.getChildren()[1].getRawSignature();
                                     parameters.add(parameter);
+                                    paramList += parameter.type + " " + parameter.variableName + ", ";
+                                    callList += parameter.variableName + ", ";
                                 }
+                                if(!paramList.equals("")) {
+                                    paramList = paramList.substring(0, paramList.lastIndexOf(", "));
+                                    callList = callList.substring(0, callList.lastIndexOf(", "));
+                                }
+
+                                nativeClass += "\t\tpublic "+ definedclassName +"(" + paramList + "){\r\n";
+                                nativeClass += "\t\t\tallocate(" + callList + ");\r\n\t\t}\r\n";
+                                nativeClass += "\t\tprivate native void allocate(" + paramList + ");\r\n";
+
                                 Constructor constructor = new Constructor(definedclassName, parameters,classReader);
                                 constructors.add(constructor);
                             }
@@ -357,6 +378,20 @@ public class ClassReader {
                             fieldList.add(field);
                         }
                         IASTNode typedef = ast.getChildren().length == 1 ? ast.getChildren()[0] : ast.getChildren()[1];
+                        if (ast.getSyntax().getImage().equals("enum") || ast.getSyntax().getImage().equals("struct")) {
+                            isClass = false;
+                        }
+                        if (ast.getSyntax().getImage().equals("class")) {
+                            isClass = true;
+                            nativeClass += "@Platform(include="+"\""+ ast.getSyntax().getNext().getImage()+".h\""+")\r\n";
+                            nativeClass += "public class " + ast.getSyntax().getNext().getImage() +"Clzz {\r\n";
+                            nativeClass += "\tpublic static " + typedef + " extends Pointer {\r\n";
+                            nativeClass += "\t\tstatic {\r\n\t\t\tLoader.load();\r\n\t\t}\r\n";
+                        } else if (!isPrivate && ast.getSyntax().getImage().contains("int") && isClass) {
+                            nativeClass += "\t\tpublic native @ByVal " + declaration.getRawSignature() +"\r\n";
+                        } else if (!isPrivate && ast.getSyntax().getImage().contains("string") && isClass) {
+                            nativeClass += "\t\tpublic native @StdString String "+ declaration.getRawSignature() +"\r\n";
+                        }
                         //System.out.println("------- typedef: " + typedef);
                         IASTNode[] children = typedef.getChildren();
                        // if ((children != null) && (children.length > 0))
@@ -413,5 +448,19 @@ public class ClassReader {
         iastTranslationUnit.accept(visitor);
     }
 
+    public String getNativeClass() {
+        String prev = nativeClass;
+        nativeClass = "import org.bytedeco.javacpp.Loader;\n" +
+                "import org.bytedeco.javacpp.Pointer;\n" +
+                "import org.bytedeco.javacpp.annotation.*;\n\n";
+        nativeClass += prev;
+        nativeClass += "\t}\r\n\r\n";
+        nativeClass += "\tpublic static void main(String[] args) {}\r\n}";
+        return nativeClass;
+    }
+
+    public String getDefinedclassName() {return  definedclassName;}
     private String definedclassName;
+    private String nativeClass = "";
+    private boolean isPrivate, isClass;
 }
