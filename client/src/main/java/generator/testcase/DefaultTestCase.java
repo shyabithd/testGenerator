@@ -1140,6 +1140,11 @@ public class DefaultTestCase implements TestCase, Serializable {
 		return visitor.getCode();
 	}
 
+	@Override
+	public String toJavaCode() {
+		return toCode().replaceAll("\\*", "").replaceAll("->", ".");
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

@@ -1,4 +1,4 @@
-#include <TestFile.h>
+#include "TestFile.h"
 
 /**
  * Rectangle Docs
@@ -22,6 +22,7 @@ int Rectangle::setWidth(int a, int b)
     height = a;
     width = b;
  }
+ return 1;
 }
 
 int Rectangle::getWidth() { return width; }

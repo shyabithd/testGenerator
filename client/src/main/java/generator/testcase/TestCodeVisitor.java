@@ -904,9 +904,14 @@ public class TestCodeVisitor extends TestVisitor {
 				}
 			}
 		}
+		boolean isPrimitive = method.getMethod().getReturnType().isPrimitive();
+		String retVal = "";
+		if(isPrimitive) {
+			retVal = method.getMethod().getReturnType().getDataType().concat(" ").concat(method.getMethod().getName()).concat("Val = ");
+		}
 
 		if (retval.isVoid()) {
-			result += callee_str + "." + method.getName() + "(" + parameter_string + ");";
+			result += retVal + callee_str + "." + method.getName() + "(" + parameter_string + ");";
 		} else {
 			// if (exception == null || !lastStatement)
 			if (!unused)
@@ -915,7 +920,10 @@ public class TestCodeVisitor extends TestVisitor {
 			//else
 			//	result += getClassName(retval) + " " + getVariableName(retval) + " = ";
 
-			result += callee_str + "." + method.getName() + "(" + parameter_string + ");";
+			result += retVal + callee_str + "." + method.getName() + "(" + parameter_string + ");";
+		}
+		if(!retVal.equals("")) {
+			result += System.lineSeparator() + "System.out.println("+ "\""+ method.getMethod().getName().concat("Val\"+ " + method.getMethod().getName().concat("Val);"));
 		}
 
 		testCode += result + NEWLINE;

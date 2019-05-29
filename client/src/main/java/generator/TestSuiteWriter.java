@@ -30,11 +30,11 @@ public class TestSuiteWriter {
             logger.debug(absoluteFilePath+" File Created");
             String testBody = "";
             for (int i = 0; i < testCases.size(); i++)  {
-                String header = "TEST(SuiteTest, "+ "test"+ i + ") {\r\n";
-                String withTab = "\t"+testCases.get(i).toCode().replaceAll("\r\n", "\r\n\t");
+                String header = "TEST(SuiteTest, "+ "test"+ i + ") {" + System.lineSeparator() + System.lineSeparator();
+                String withTab = "\t"+testCases.get(i).toCode().replaceAll(System.lineSeparator(), System.lineSeparator()+"\t");
                 withTab = withTab.substring(0, withTab.length() - 1);
                 testBody += header+withTab;
-                testBody += "}\r\n";
+                testBody += "}" + System.lineSeparator() + System.lineSeparator();
             }
             writer.write(testBody);
             writer.close();

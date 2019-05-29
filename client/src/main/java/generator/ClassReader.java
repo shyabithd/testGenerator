@@ -10,7 +10,11 @@ import org.eclipse.cdt.core.dom.ast.gnu.cpp.GPPLanguage;
 import org.eclipse.cdt.core.parser.*;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.*;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
@@ -114,12 +118,39 @@ public class ClassReader {
         return className.concat(".cpp");
     }
 
+    private void executeMake() {
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command("bash", "-c", "make main");
+        try {
+            Process process = processBuilder.start();
+            StringBuilder output = new StringBuilder();
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line + "\n");
+            }
+
+            int exitVal = process.waitFor();
+            if (exitVal == 0) {
+                System.out.println(output);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public ClassReader()
     {
         returnMap.put("void", "V");
         returnMap.put("int", "I");
         returnMap.put("float", "F");
         returnMap.put("double", "D");
+        executeMake();
     }
 
     public Method[] getDeclaredMethods()
@@ -140,7 +171,7 @@ public class ClassReader {
         if(absoluteFilePath.endsWith(".cpp"))
         {
             FileContent fileContent = FileContent.createForExternalFileLocation(absoluteFilePath);
-            className = absoluteFilePath.substring(absoluteFilePath.lastIndexOf("\\")+2, absoluteFilePath.lastIndexOf("."));
+            className = absoluteFilePath.substring(absoluteFilePath.lastIndexOf(Path.SEPARATOR )+1, absoluteFilePath.lastIndexOf("."));
             Map definedSymbols = new HashMap();
             String[] includePaths = new String[0];
             IScannerInfo info = new ScannerInfo(definedSymbols, includePaths);
@@ -383,7 +414,11 @@ public class ClassReader {
                         }
                         if (ast.getSyntax().getImage().equals("class")) {
                             isClass = true;
-                            nativeClass += "@Platform(include="+"\""+ ast.getSyntax().getNext().getImage()+".h\""+")\r\n";
+                            nativeClass += "@Properties(\r\n";
+                            nativeClass += "\tvalue=@Platform(include={\""+ className+".h\""+"},\r\n";
+                            nativeClass += "\t\t\t\tlinkpath = {\""+ "/home/shyabith/Documents/workspace/testGenerator/libccp/" + "\"},\r\n";
+                            nativeClass += "\t\t\t\tlink="+ "\""+ "Test" + "\""+ "),\r\n";
+                            nativeClass += "\ttarget=\""+ ast.getSyntax().getNext().getImage() +"Clzz\"\r\n)\r\n";
                             nativeClass += "public class " + ast.getSyntax().getNext().getImage() +"Clzz {\r\n";
                             nativeClass += "\tpublic static " + typedef + " extends Pointer {\r\n";
                             nativeClass += "\t\tstatic {\r\n\t\t\tLoader.load();\r\n\t\t}\r\n";
@@ -449,14 +484,14 @@ public class ClassReader {
     }
 
     public String getNativeClass() {
-        String prev = nativeClass;
-        nativeClass = "import org.bytedeco.javacpp.Loader;\n" +
-                "import org.bytedeco.javacpp.Pointer;\n" +
-                "import org.bytedeco.javacpp.annotation.*;\n\n";
-        nativeClass += prev;
-        nativeClass += "\t}\r\n\r\n";
-        nativeClass += "\tpublic static void main(String[] args) {}\r\n}";
-        return nativeClass;
+        String retVal = "import org.bytedeco.javacpp.Loader;\n"
+                .concat("import org.bytedeco.javacpp.Pointer;\n")
+                .concat("import org.bytedeco.javacpp.annotation.*;\n\n")
+                .concat(nativeClass)
+                .concat("\t}\r\n\r\n\t")
+                .concat(Properties.mainMethod)
+                .concat("\r\n}");
+        return retVal;
     }
 
     public String getDefinedclassName() {return  definedclassName;}

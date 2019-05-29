@@ -362,5 +362,6 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 	 * @param exceptions a {@link Map} object.
 	 */
 	public String toCode(Map<Integer, Throwable> exceptions);
-	
+
+	public String toJavaCode();
 }

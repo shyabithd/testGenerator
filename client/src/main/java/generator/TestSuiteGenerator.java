@@ -20,9 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import runtime.LoopCounter;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -245,12 +243,6 @@ public class TestSuiteGenerator {
         try {
             classReader.readFile(cp+"/"+Properties.TARGET_CLASS);
             classReader.parseTree();
-            String nativeClass = classReader.getNativeClass();
-            BufferedWriter writer = new BufferedWriter(new FileWriter(classReader.getDefinedclassName() + "Clzz.java"));
-            writer.write(nativeClass);
-            writer.close();
-            String[] args = {classReader.getDefinedclassName()+"Clzz.java", "-exec"};
-            Builder.main(args);
             TestGenerationContext.getInstance().setClassReader(classReader);
             Properties.setTargetClass(classReader);
         } catch (CoreException e) {

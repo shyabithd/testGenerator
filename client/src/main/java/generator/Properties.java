@@ -5,11 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import runtime.RuntimeSettings;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -32,6 +28,37 @@ public class Properties {
 	 * input plugins to organize parameters, and the description is also
 	 * displayed there.
 	 */
+
+
+	public static void executeCommand(String execCommand) {
+		System.out.println();
+		ProcessBuilder processBuilder = new ProcessBuilder();
+		processBuilder.command("bash", "-c", execCommand);
+		try {
+			Process process = processBuilder.start();
+			StringBuilder output = new StringBuilder();
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(process.getInputStream()));
+
+			String line;
+			while ((line = reader.readLine()) != null) {
+				output.append(line).append("\n");
+			}
+
+			int exitVal = process.waitFor();
+			if (exitVal == 0) {
+				System.out.println(output);
+			}
+
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static String nativeClassExec = "java -jar javaccp/javacpp.jar RectangleClzz.java -exec";
+	public static String mainMethod = "public static void main(String[] args) {}";
+	public static String mainMethodWithoutBraces = "public static void main(String[] args) {";
+
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.FIELD)
 	public @interface Parameter {
@@ -2253,7 +2280,7 @@ public class Properties {
 	 */
 	public static ClassReader getTargetClassRegression(boolean isOriginal){
 		if (isOriginal && TARGET_CLASS_INSTANCE != null
-		        && TARGET_CLASS_INSTANCE.getCanonicalName().equals(TARGET_CLASS))
+		        && TARGET_CLASS_INSTANCE.getCanonicalName().contains(TARGET_CLASS))
 			return TARGET_CLASS_INSTANCE;
 		else if(!isOriginal && TARGET_REGRESSION_CLASS_INSTANCE != null
 		        && TARGET_REGRESSION_CLASS_INSTANCE.getCanonicalName().equals(TARGET_CLASS))

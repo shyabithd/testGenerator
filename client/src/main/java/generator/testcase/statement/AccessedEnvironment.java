@@ -1,6 +1,6 @@
 package generator.testcase.statement;
 
-import com.sun.corba.se.spi.activation.EndPointInfo;
+//import com.sun.corba.se.spi.activation.EndPointInfo;
 import utils.Inputs;
 
 import java.io.Serializable;
@@ -33,35 +33,35 @@ public class AccessedEnvironment implements Serializable {
     /**
      *  TCP/UDP sockets opened by the SUT
      */
-    private final Set<EndPointInfo> localListeningPorts;
-
-
-    /**
-     * Remote addr/ports the SUT has contacted (ie initialized communication)
-     * via TCP/UDP
-     */
-    private final Set<EndPointInfo> remoteContactedPorts;
+//    private final Set<EndPointInfo> localListeningPorts;
+//
+//
+//    /**
+//     * Remote addr/ports the SUT has contacted (ie initialized communication)
+//     * via TCP/UDP
+//     */
+//    private final Set<EndPointInfo> remoteContactedPorts;
 
     public AccessedEnvironment(){
         localFiles = new LinkedHashSet<>();
         remoteURLs = new LinkedHashSet<>();
-        localListeningPorts = new LinkedHashSet<>();
-        remoteContactedPorts = new LinkedHashSet<>();
+//        localListeningPorts = new LinkedHashSet<>();
+//        remoteContactedPorts = new LinkedHashSet<>();
     }
 
     public void copyFrom(AccessedEnvironment other){
         clear();
         this.localFiles.addAll(other.localFiles);
         this.remoteURLs.addAll(other.remoteURLs);
-        this.localListeningPorts.addAll(other.localListeningPorts);
-        this.remoteContactedPorts.addAll(other.remoteContactedPorts);
+//        this.localListeningPorts.addAll(other.localListeningPorts);
+//        this.remoteContactedPorts.addAll(other.remoteContactedPorts);
     }
 
     public void clear(){
         localFiles.clear();
         remoteURLs.clear();
-        localListeningPorts.clear();
-        remoteContactedPorts.clear();
+//        localListeningPorts.clear();
+//        remoteContactedPorts.clear();
     }
 
     public boolean hasProperty(String property) throws IllegalArgumentException{
@@ -70,21 +70,21 @@ public class AccessedEnvironment implements Serializable {
         return false; //TODO
     }
 
-    public void addRemoteContactedPorts(Collection<EndPointInfo> ports){
-        remoteContactedPorts.addAll(ports);
-    }
-
-    public Set<EndPointInfo> getViewOfRemoteContactedPorts(){
-        return Collections.unmodifiableSet(remoteContactedPorts);
-    }
-
-    public void addLocalListeningPorts(Collection<EndPointInfo> ports){
-        localListeningPorts.addAll(ports);
-    }
-
-    public Set<EndPointInfo> getViewOfLocalListeningPorts(){
-        return Collections.unmodifiableSet(localListeningPorts);
-    }
+//    public void addRemoteContactedPorts(Collection<EndPointInfo> ports){
+//        remoteContactedPorts.addAll(ports);
+//    }
+//
+//    public Set<EndPointInfo> getViewOfRemoteContactedPorts(){
+//        return Collections.unmodifiableSet(remoteContactedPorts);
+//    }
+//
+//    public void addLocalListeningPorts(Collection<EndPointInfo> ports){
+//        localListeningPorts.addAll(ports);
+//    }
+//
+//    public Set<EndPointInfo> getViewOfLocalListeningPorts(){
+//        return Collections.unmodifiableSet(localListeningPorts);
+//    }
 
     public void addLocalFiles(Collection<String> files){
         localFiles.addAll(files);
@@ -102,9 +102,9 @@ public class AccessedEnvironment implements Serializable {
         return Collections.unmodifiableSet(remoteURLs);
     }
     
-    public boolean isNetworkAccessed() {
-    	return !remoteURLs.isEmpty() || !localListeningPorts.isEmpty() || !remoteContactedPorts.isEmpty();
-    }
+//    public boolean isNetworkAccessed() {
+//    	return !remoteURLs.isEmpty() || !localListeningPorts.isEmpty() || !remoteContactedPorts.isEmpty();
+//    }
     
     public boolean isFileSystemAccessed() {
     	return !localFiles.isEmpty();

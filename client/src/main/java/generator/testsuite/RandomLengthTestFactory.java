@@ -1,11 +1,16 @@
 package generator.testsuite;
 
+import generator.ClassReader;
 import generator.Properties;
 import generator.ga.ChromosomeFactory;
 import generator.testcase.*;
 import generator.utils.Randomness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * <p>
@@ -46,6 +51,7 @@ public class RandomLengthTestFactory implements ChromosomeFactory<TestChromosome
 			testFactory.insertRandomStatement(test, test.size() - 1);
 			num++;
 		}
+		generateAsserts(test);
 		if (logger.isDebugEnabled())
 			logger.debug("Randomized test case:" + test.toCode());
 
@@ -53,6 +59,24 @@ public class RandomLengthTestFactory implements ChromosomeFactory<TestChromosome
 			ExecutionTracer.enable();
 
 		return test;
+	}
+
+	/**
+	 * Generate a random asserts
+	 */
+	private void generateAsserts(TestCase testCase) {
+		ClassReader classReader = Properties.getTargetClassRegression(true);
+		String nativeClass = classReader.getNativeClass();
+		String mainMethod = Properties.mainMethodWithoutBraces.concat(System.lineSeparator()).concat(testCase.toJavaCode()).concat("}");
+		nativeClass = nativeClass.replace(Properties.mainMethod, mainMethod.replaceAll(System.lineSeparator(), System.lineSeparator()+"\t\t"));
+
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(classReader.getDefinedclassName() + "Clzz.java"))) {
+			writer.flush();
+			writer.write(nativeClass);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Properties.executeCommand(Properties.nativeClassExec);
 	}
 
 	/**
