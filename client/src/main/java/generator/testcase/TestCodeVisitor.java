@@ -907,7 +907,7 @@ public class TestCodeVisitor extends TestVisitor {
 		boolean isPrimitive = method.getMethod().getReturnType().isPrimitive();
 		String retVal = "";
 		if(isPrimitive) {
-			retVal = method.getMethod().getReturnType().getDataType().concat(" ").concat(method.getMethod().getName()).concat("Val = ");
+			retVal = method.getMethod().getReturnType().getDataType().concat(" ").concat(method.getMethod().getName()).concat("__Val__ = ");
 		}
 
 		if (retval.isVoid()) {
@@ -923,7 +923,8 @@ public class TestCodeVisitor extends TestVisitor {
 			result += retVal + callee_str + "." + method.getName() + "(" + parameter_string + ");";
 		}
 		if(!retVal.equals("")) {
-			result += System.lineSeparator() + "System.out.println("+ "\""+ method.getMethod().getName().concat("Val\"+ " + method.getMethod().getName().concat("Val);"));
+			result += System.lineSeparator() + Properties.printCommand + "(\"####"+ method.getMethod().getName().concat("__Val__\"+ " +
+					method.getMethod().getName().concat("__Val__);")).concat(System.lineSeparator());
 		}
 
 		testCode += result + NEWLINE;

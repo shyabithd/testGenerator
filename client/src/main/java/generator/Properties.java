@@ -12,10 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Properties {
 
@@ -30,31 +27,35 @@ public class Properties {
 	 */
 
 
-	public static void executeCommand(String execCommand) {
+	public static ArrayList<String> executeCommand(String execCommand) {
 		System.out.println();
+		ArrayList<String> list = new ArrayList<String>();
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.command("bash", "-c", execCommand);
 		try {
 			Process process = processBuilder.start();
-			StringBuilder output = new StringBuilder();
 			BufferedReader reader = new BufferedReader(
 					new InputStreamReader(process.getInputStream()));
 
 			String line;
 			while ((line = reader.readLine()) != null) {
-				output.append(line).append("\n");
+				if (line.contains("####")) {
+					list.add(line.substring(4));
+				}
 			}
 
 			int exitVal = process.waitFor();
 			if (exitVal == 0) {
-				System.out.println(output);
+				System.out.println(list);
 			}
 
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
+		return list;
 	}
 
+	public static String printCommand = "System.out.println";
 	public static String nativeClassExec = "java -jar javaccp/javacpp.jar RectangleClzz.java -exec";
 	public static String mainMethod = "public static void main(String[] args) {}";
 	public static String mainMethodWithoutBraces = "public static void main(String[] args) {";

@@ -70,9 +70,9 @@ public class ClassReader {
 
         public String getName() {
             if(methodName.contains(":")) {
-                return methodName.substring(methodName.lastIndexOf(":")+1, methodName.indexOf("("));
+                return methodName.substring(methodName.lastIndexOf(":")+1, methodName.indexOf("(")).trim();
             }
-            return methodName.substring(methodName.lastIndexOf(" "), methodName.indexOf("("));
+            return methodName.substring(methodName.lastIndexOf(" "), methodName.indexOf("(")).trim();
         }
 
         public DataType[] getParameterTypes() {
@@ -443,20 +443,23 @@ public class ClassReader {
 //                        System.out.println("iastAttribute > " + iastAttribute);
 //                    }
                 }
-//                if ((declaration instanceof IASTFunctionDefinition)) {
-//                    IASTFunctionDefinition ast = (IASTFunctionDefinition) declaration;
-//                    IScope scope = ast.getScope();
-//                    try {
-//                        System.out.println("### function() - Parent = " + scope.getParent().getScopeName());
-//                        System.out.println("### function() - Syntax = " + ast.getSyntax());
-//                    } catch (DOMException e) {
-//                        e.printStackTrace();
-//                    } catch (ExpansionOverlapsBoundaryException e) {
-//                        e.printStackTrace();
-//                    }
-//                    ICPPASTFunctionDeclarator typedef = (ICPPASTFunctionDeclarator) ast.getDeclarator();
-//                    System.out.println("------- typedef: " + typedef.getName());
-//                }
+                if ((declaration instanceof IASTFunctionDefinition)) {
+                    IASTFunctionDefinition ast = (IASTFunctionDefinition) declaration;
+                    //IScope scope = ast.getScope();
+
+                    ICPPASTFunctionDeclarator typedef = (ICPPASTFunctionDeclarator) ast.getDeclarator();
+                    //System.out.println("------- typedef: " + typedef.getName());
+
+                    try {
+                        if (!isPrivate && ast.getSyntax().toString().contains("int") && isClass) {
+                            nativeClass += "\t\tpublic native @ByVal int " + typedef.getName() +"();\r\n";
+                        } else if (!isPrivate && ast.getSyntax().toString().contains("string") && isClass) {
+                            nativeClass += "\t\tpublic native @StdString String "+ typedef.getName() +"();\r\n";
+                        }
+                    } catch (ExpansionOverlapsBoundaryException e) {
+                        e.printStackTrace();
+                    }
+                }
                 return 3;
             }
 

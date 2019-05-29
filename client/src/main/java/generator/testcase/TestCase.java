@@ -193,6 +193,8 @@ public interface TestCase extends Iterable<Statement>, Cloneable, Listenable<Voi
 	 */
 	public Statement getStatement(int position);
 
+	public int getStatementCount();
+
 	/**
 	 * Check if there is a statement at the given position.
 	 *

@@ -740,6 +740,10 @@ public class DefaultTestCase implements TestCase, Serializable {
 		return statements.get(position);
 	}
 
+	@Override
+	public int getStatementCount() {
+		return statements.size();
+	}
 	/* (non-Javadoc)
 	 * @see org.evosuite.testcase.TestCase#hasStatement(int)
 	 */
