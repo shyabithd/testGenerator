@@ -146,6 +146,12 @@ public class TestSuiteGenerator {
 
         // progressMonitor.setCurrentPhase("Writing JUnit test cases");
         TestGenerationResult result = writeUnitTestsAndCreateResult(testCases);
+        if (Properties.GENREPORT) {
+            Properties.executeCommand("cp TestFile.h Results/.");
+            Properties.executeCommand("cp TestFile.cpp Results/.");
+            Properties.executeCommand("cp ESTest.cpp Results/.");
+            Properties.executeCommand("cd Results/ && cmake CMakeLists.txt && make && ./runTests && ./genHtml");
+        }
         writeJUnitFailingTests();
         /*
          * TODO: when we will have several processes running in parallel, we ll

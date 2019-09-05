@@ -26,6 +26,19 @@ public class Properties {
 	 * displayed there.
 	 */
 
+	public static int executeCommand(String... execCommand) {
+		System.out.println();
+		int exitVal = 0;
+		ProcessBuilder processBuilder = new ProcessBuilder();
+		processBuilder.command(execCommand);
+		try {
+			Process process = processBuilder.start();
+			exitVal = process.waitFor();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		return exitVal;
+	}
 
 	public static ArrayList<String> executeCommand(String execCommand) {
 		System.out.println();
@@ -59,6 +72,19 @@ public class Properties {
 	public static String nativeClassExec = "java -jar javaccp/javacpp.jar RectangleClzz.java -exec";
 	public static String mainMethod = "public static void main(String[] args) {}";
 	public static String mainMethodWithoutBraces = "public static void main(String[] args) {";
+
+	public static void copyFile(File file, File file1) throws IOException {
+		InputStream in = new FileInputStream(file);
+		OutputStream out = new FileOutputStream(file1);
+
+		byte[] buff = new byte[1024];
+		int length;
+		while((length = in.read(buff)) > 0 ) {
+			out.write(buff, 0, length);
+		}
+		in.close();
+		out.close();
+	}
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.FIELD)
@@ -1357,6 +1383,8 @@ public class Properties {
 	@Parameter(key = "jmc", group = "Debugging", description = "Experimental: activate Flight Recorder in spawn client process for Java Mission Control")
 	public static boolean JMC = false;
 
+	@Parameter(key = "report", group = "Debugging", description = "Enables report generation")
+	public static boolean GENREPORT = false;
 
 	// ---------------------------------------------------------------
 	// TODO: Fix description
