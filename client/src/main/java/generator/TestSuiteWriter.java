@@ -87,6 +87,10 @@ public class TestSuiteWriter {
                 testBody += header+withTab;
                 testBody += "}" + System.lineSeparator() + System.lineSeparator();
             }
+            testBody += "int main(int argc, char** argv) {" + System.lineSeparator();
+            testBody += "\t\t" + "testing::InitGoogleTest(&argc, argv);"+ System.lineSeparator();
+            testBody += "\t\t" + "return RUN_ALL_TESTS();" + System.lineSeparator() + "}" + System.lineSeparator();
+
             writer.write(testBody);
             writer.close();
         } catch (IOException e) {
@@ -95,8 +99,8 @@ public class TestSuiteWriter {
     }
 
     private void addHeaders(BufferedWriter bufferedWriter) throws IOException {
-        String includes = "#include<"+ Properties.TARGET_CLASS+">\r\n";
-        includes += "#include<gtest>\r\n\r\n";
+        String includes = "#include \""+ Properties.TARGET_CLASS+"\"\r\n";
+        includes += "#include \"gtest/gtest.h\"\r\n\r\n";
         bufferedWriter.write(includes);
     }
 }

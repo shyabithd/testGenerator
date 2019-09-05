@@ -416,7 +416,7 @@ public class ClassReader {
                             isClass = true;
                             nativeClass += "@Properties(\r\n";
                             nativeClass += "\tvalue=@Platform(include={\""+ className+".h\""+"},\r\n";
-                            nativeClass += "\t\t\t\tlinkpath = {\""+ "/home/shyabith/Documents/workspace/testGenerator/libccp/" + "\"},\r\n";
+                            nativeClass += "\t\t\t\tlinkpath = {\""+ "/home/shyabith/Documents/testGenerator/libccp/" + "\"},\r\n";
                             nativeClass += "\t\t\t\tlink="+ "\""+ "Test" + "\""+ "),\r\n";
                             nativeClass += "\ttarget=\""+ ast.getSyntax().getNext().getImage() +"Clzz\"\r\n)\r\n";
                             nativeClass += "public class " + ast.getSyntax().getNext().getImage() +"Clzz {\r\n";

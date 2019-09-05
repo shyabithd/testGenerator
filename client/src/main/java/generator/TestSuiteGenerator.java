@@ -195,7 +195,7 @@ public class TestSuiteGenerator {
             String testDir = ClassPathHandler.getInstance().getTargetProjectClasspath();
 
             LoggingUtils.getGeneratorLogger().info("* Writing JUnit test case '" + (name + junitSuffix) + "' to " + testDir);
-            suiteWriter.writeTestSuite(name + junitSuffix, testDir);
+            suiteWriter.writeTestSuite(junitSuffix, testDir);
         }
         return TestGenerationResultBuilder.buildSuccessResult();
     }

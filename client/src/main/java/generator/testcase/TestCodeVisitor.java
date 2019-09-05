@@ -911,7 +911,7 @@ public class TestCodeVisitor extends TestVisitor {
 		}
 
 		if (retval.isVoid()) {
-			result += retVal + callee_str + "." + method.getName() + "(" + parameter_string + ");";
+			result += retVal + callee_str + "->" + method.getName() + "(" + parameter_string + ");";
 		} else {
 			// if (exception == null || !lastStatement)
 			if (!unused)
@@ -920,7 +920,7 @@ public class TestCodeVisitor extends TestVisitor {
 			//else
 			//	result += getClassName(retval) + " " + getVariableName(retval) + " = ";
 
-			result += retVal + callee_str + "." + method.getName() + "(" + parameter_string + ");";
+			result += retVal + callee_str + "->" + method.getName() + "(" + parameter_string + ");";
 		}
 		if(!retVal.equals("")) {
 			result += System.lineSeparator() + Properties.printCommand + "(\"####"+ method.getMethod().getName().concat("__Val__\"+ " +
