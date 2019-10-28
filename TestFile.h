@@ -1,32 +1,19 @@
 #include <iostream>
+#include <vector>
+#include <map>
+#include "Util.h"
 
-class Rectangle {
-private:
-    int width;
-    int height;
-  public:
-    Rectangle (int x,int y);
+using namespace std;
 
-    /** area function Docs */
-    int area () {return (width*height);}
+class ClassB {
 
-    int getWidth();
-    int setWidth(int a, int b);
-};
+    private:
+        int x;
+        int y;
 
-namespace CommandType {
-	enum CommandType {
-		ON_OFF = 1,
-		ANALOG = 2
-
-	};
-}
-
-struct Command {
-	uint8_t type; // values of CommandType
-	uint8_t id;
-	uint8_t deviceID;
-	uint16_t value;
-	char *data; // raw data received (if not default command's)
-	size_t length;
+    public:
+        ClassB();
+        int set(int x1, int y1);
+        int getX() { return x; }
+        int getY() { return y; }
 };

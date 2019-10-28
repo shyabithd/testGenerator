@@ -20,6 +20,8 @@ import utils.JavaExecCmdUtil;
 
 import java.io.File;
 import java.rmi.RemoteException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class TestGeneration {
@@ -105,6 +107,9 @@ public class TestGeneration {
                                                                   String target,
                                                                   List<String> args) {
 
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+        LoggingUtils.getGeneratorLogger().info("* Start Time: "+dateTimeFormatter.format(now));
         LoggingUtils.getGeneratorLogger().info("* Going to generate test cases for class: "+target);
 
         if (!findTargetClass(projectCP, target)) {

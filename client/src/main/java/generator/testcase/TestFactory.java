@@ -1614,7 +1614,8 @@ public class TestFactory {
 						position += test.size() - previousLength;
 						previousLength = test.size();
 					} else {
-						callee = test.getRandomNonNullObject(target, position);
+						callee = test.getObjects(1).get(0);
+						//callee = test.getRandomNonNullObject(target, position);
 						// This may also be an inner class, in this case we can't use a SUT instance
 						//if (!callee.isAssignableTo(m.getDeclaringClass())) {
 						//	callee = test.getRandomNonNullObject(m.getDeclaringClass(), position);

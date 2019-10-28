@@ -134,28 +134,28 @@ public class WholeTestSuiteStrategy extends TestGenerationStrategy {
                 goals.addAll(factory.getCoverageGoals());
 
                 if(verbose) {
-                    LoggingUtils.getGeneratorLogger().info("* Total number of test goals: {}", factory.getCoverageGoals().size());
-					if (Properties.PRINT_GOALS) {
-						for (TestFitnessFunction goal : factory.getCoverageGoals())
-							LoggingUtils.getGeneratorLogger().info("" + goal.toString());
-					}
+                    //LoggingUtils.getGeneratorLogger().info("* Total number of test goals: {}", factory.getCoverageGoals().size());
+					//if (Properties.PRINT_GOALS) {
+					//	for (TestFitnessFunction goal : factory.getCoverageGoals())
+					//		LoggingUtils.getGeneratorLogger().info("" + goal.toString());
+					//}
 				}
         } else {
                 if(verbose) {
-                        LoggingUtils.getGeneratorLogger().info("* Total number of test goals: ");
+                        //LoggingUtils.getGeneratorLogger().info("* Total number of test goals: ");
                 }
 
                 for (TestFitnessFactory<? extends TestFitnessFunction> goalFactory : goalFactories) {
                         goals.addAll(goalFactory.getCoverageGoals());
 
-                        if(verbose) {
-                            LoggingUtils.getGeneratorLogger().info("  - " + goalFactory.getClass().getSimpleName().replace("CoverageFactory", "")
-                                                + " " + goalFactory.getCoverageGoals().size());
-							if (Properties.PRINT_GOALS) {
-								for (TestFitnessFunction goal : goalFactory.getCoverageGoals())
-									LoggingUtils.getGeneratorLogger().info("" + goal.toString());
-							}
-                        }
+                        //if(verbose) {
+                        //    LoggingUtils.getGeneratorLogger().info("  - " + goalFactory.getClass().getSimpleName().replace("CoverageFactory", "")
+                        //                        + " " + goalFactory.getCoverageGoals().size());
+						//	if (Properties.PRINT_GOALS) {
+						//		for (TestFitnessFunction goal : goalFactory.getCoverageGoals())
+						//			LoggingUtils.getGeneratorLogger().info("" + goal.toString());
+						//	}
+                        //}
                 }
         }
         return goals;

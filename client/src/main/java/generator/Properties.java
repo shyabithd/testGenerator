@@ -69,7 +69,7 @@ public class Properties {
 	}
 
 	public static String printCommand = "System.out.println";
-	public static String nativeClassExec = "java -jar javaccp/javacpp.jar RectangleClzz.java -exec";
+	public static String nativeClassExec = "java -jar javaccp/javacpp.jar ";
 	public static String mainMethod = "public static void main(String[] args) {}";
 	public static String mainMethodWithoutBraces = "public static void main(String[] args) {";
 
@@ -262,10 +262,10 @@ public class Properties {
 	public static int NUM_RANDOM_TESTS = 20;
 
 	@Parameter(key = "min_initial_tests", group = "Test Creation", description = "Minimum number of tests in initial test suites")
-	public static int MIN_INITIAL_TESTS = 1;
+	public static int MIN_INITIAL_TESTS = 10;
 
 	@Parameter(key = "max_initial_tests", group = "Test Creation", description = "Maximum number of tests in initial test suites")
-	public static int MAX_INITIAL_TESTS = 10;
+	public static int MAX_INITIAL_TESTS = 20;
 
 	@Parameter(key = "use_deprecated", group = "Test Creation", description = "Include deprecated methods in tests")
 	public static boolean USE_DEPRECATED = false;
@@ -560,7 +560,7 @@ public class Properties {
 
 	@Parameter(key = "chromosome_length", group = "Search Algorithm", description = "Maximum length of chromosomes during search")
 	@IntValue(min = 1, max = 100000)
-	public static int CHROMOSOME_LENGTH = 40;
+	public static int CHROMOSOME_LENGTH = 20;
 
 	@Parameter(key = "number_of_tests_per_target", group = "Search Algorithm", description = "Number of test cases for each target goal to keep in an archive")
 	public static int NUMBER_OF_TESTS_PER_TARGET = 10;

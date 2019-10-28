@@ -18,6 +18,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.RemoteException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
@@ -490,7 +492,9 @@ public class ExternalProcessHandler {
 					}
 
 					if (message.equals(Messages.FINISHED_COMPUTATION)) {
-						LoggingUtils.getGeneratorLogger().info("* Computation finished");
+						DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+						LocalDateTime now = LocalDateTime.now();
+						LoggingUtils.getGeneratorLogger().info("* Computation finished at: " + dateTimeFormatter.format(now));
 						read = false;
 						killProcess();
 						final_result = data;
@@ -590,7 +594,9 @@ public class ExternalProcessHandler {
 		}
 
 		killProcess();
-		LoggingUtils.getGeneratorLogger().info("* Computation finished");
+		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+		LocalDateTime now = LocalDateTime.now();
+		LoggingUtils.getGeneratorLogger().info("* Computation finished at: "+ dateTimeFormatter.format(now));
 
 		return null; //TODO refactoring
 		/*

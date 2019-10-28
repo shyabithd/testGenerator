@@ -10,6 +10,7 @@ import generator.ga.selection.RankSelection;
 import generator.ga.selection.SelectionFunction;
 import generator.ga.stoppingconditions.MaxGenerationStoppingCondition;
 import generator.ga.stoppingconditions.StoppingCondition;
+import generator.testcase.TestCase;
 import generator.testsuite.TestSuiteChromosome;
 import generator.utils.LoggingUtils;
 import generator.utils.Randomness;
@@ -576,7 +577,17 @@ public abstract class GeneticAlgorithm<T extends Chromosome> implements SearchAl
 		}
 
 		// Assume population is sorted
-		return population.get(0);
+		int max = -1;
+		int index = 0;
+		for (int i = 0; i < population.size(); ++i) {
+			T testSuiteChromosome = population.get(i);
+			if( max < ((TestSuiteChromosome) testSuiteChromosome).getTests().size())
+			{
+				max = ((TestSuiteChromosome) testSuiteChromosome).getTests().size();
+				index = i;
+			}
+		}
+		return population.get(index);
 	}
 
 	public List<T> getBestIndividuals() {

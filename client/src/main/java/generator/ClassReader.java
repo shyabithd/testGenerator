@@ -238,7 +238,9 @@ public class ClassReader {
                     {
                         variableList = variableList + returnMap.get(parameter.type) + ",";
                     }
-                    variableList = variableList.substring(0, variableList.lastIndexOf(","));
+                    if(method.parameters.size() != 0) {
+                        variableList = variableList.substring(0, variableList.lastIndexOf(","));
+                    }
                     methondName = methondName + variableList + ")" + returnMap.get(method.returnType);
                     Branch b = new Branch(className, methondName, method.lineNo);
                     BranchPool.getInstance(this).addBranchToMap(b);
@@ -380,7 +382,7 @@ public class ClassReader {
                             IASTNode typedef = ast.getChildren().length == 1 ? ast.getChildren()[0] : ast.getChildren()[1];
                             //System.out.println("------- hello: " + ast.getSyntax());
                             String dataType = ast.getSyntax().getImage();
-                            if(definedclassName.equals(dataType)) {
+                            if(definedclassName!= null && definedclassName.equals(dataType)) {
                                 List<Parameter> parameters = new ArrayList<>();
                                 String paramList = "";
                                 String callList = "";
@@ -416,7 +418,7 @@ public class ClassReader {
                             isClass = true;
                             nativeClass += "@Properties(\r\n";
                             nativeClass += "\tvalue=@Platform(include={\""+ className+".h\""+"},\r\n";
-                            nativeClass += "\t\t\t\tlinkpath = {\""+ "/home/shyabith/Documents/testGenerator/libccp/" + "\"},\r\n";
+                            nativeClass += "\t\t\t\tlinkpath = {\""+ System.getenv("TESTPATH") + "\"},\r\n";
                             nativeClass += "\t\t\t\tlink="+ "\""+ "Test" + "\""+ "),\r\n";
                             nativeClass += "\ttarget=\""+ ast.getSyntax().getNext().getImage() +"Clzz\"\r\n)\r\n";
                             nativeClass += "public class " + ast.getSyntax().getNext().getImage() +"Clzz {\r\n";
@@ -452,7 +454,11 @@ public class ClassReader {
 
                     try {
                         if (!isPrivate && ast.getSyntax().toString().contains("int") && isClass) {
-                            nativeClass += "\t\tpublic native @ByVal int " + typedef.getName() +"();\r\n";
+                            String param = "";
+                            for (ICPPASTParameterDeclaration var : typedef.getParameters()) {
+                                param += var.getOriginalNode().getRawSignature();
+                            }
+                            nativeClass += "\t\tpublic native @ByVal int " + typedef.getName() +"(" + param + ");\r\n";
                         } else if (!isPrivate && ast.getSyntax().toString().contains("string") && isClass) {
                             nativeClass += "\t\tpublic native @StdString String "+ typedef.getName() +"();\r\n";
                         }
@@ -464,12 +470,12 @@ public class ClassReader {
             }
 
             public int visit(IASTTypeId typeId) {
-                System.out.println("typeId: " + typeId.getRawSignature());
+                //System.out.println("typeId: " + typeId.getRawSignature());
                 return 3;
             }
 
             public int visit(IASTStatement statement) {
-                System.out.println("statement: " + statement.getRawSignature());
+                //System.out.println("statement: " + statement.getRawSignature());
                 return 3;
             }
 

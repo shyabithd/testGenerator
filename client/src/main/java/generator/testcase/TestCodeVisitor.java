@@ -49,6 +49,7 @@ public class TestCodeVisitor extends TestVisitor {
 
 	protected final Map<String, Integer> nextIndices = new HashMap<String, Integer>();
 
+	private static int inc = 0;
 	/**
 	 * <p>
 	 * getCode
@@ -907,7 +908,7 @@ public class TestCodeVisitor extends TestVisitor {
 		boolean isPrimitive = method.getMethod().getReturnType().isPrimitive();
 		String retVal = "";
 		if(isPrimitive) {
-			retVal = method.getMethod().getReturnType().getDataType().concat(" ").concat(method.getMethod().getName()).concat("__Val__ = ");
+			retVal = method.getMethod().getReturnType().getDataType().concat(" ").concat(method.getMethod().getName()).concat("__Val__").concat(String.valueOf(TestCodeVisitor.inc)).concat(" = ");
 		}
 
 		if (retval.isVoid()) {
@@ -923,10 +924,10 @@ public class TestCodeVisitor extends TestVisitor {
 			result += retVal + callee_str + "->" + method.getName() + "(" + parameter_string + ");";
 		}
 		if(!retVal.equals("")) {
-			result += System.lineSeparator() + Properties.printCommand + "(\"####"+ method.getMethod().getName().concat("__Val__\"+ " +
-					method.getMethod().getName().concat("__Val__);")).concat(System.lineSeparator());
+			result += System.lineSeparator() + Properties.printCommand + "(\"####"+ method.getMethod().getName().concat("__Val__" + String.valueOf(TestCodeVisitor.inc) +" \" + " +
+					method.getMethod().getName().concat("__Val__" + String.valueOf(TestCodeVisitor.inc) +");")).concat(System.lineSeparator());
 		}
-
+		TestCodeVisitor.inc++;
 		testCode += result + NEWLINE;
 		//addAssertions(statement);
 	}

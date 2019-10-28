@@ -1,28 +1,14 @@
 #include "TestFile.h"
 
-/**
- * Rectangle Docs
- */
-// == 28
-// < 8
-// > 9
-Rectangle::Rectangle (int a, int b) {
-  width = a;
-  height = b;
-}
-int Rectangle::setWidth(int a, int b)
-{
- if (a < b)
- {
-    width = a;
-    height = b;
- }
- else
- {
-    height = a;
-    width = b;
- }
- return 1;
-}
+ClassB::ClassB() : x(0), y(0) {}
 
-int Rectangle::getWidth() { return width; }
+int ClassB::set(int x1, int y1) {
+
+    if (x1 < y1) {
+        x = x1;
+        y = y1;
+    } else {
+        x = y1;
+        y = x1;
+    }
+}

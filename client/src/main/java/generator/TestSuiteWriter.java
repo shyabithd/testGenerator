@@ -37,33 +37,23 @@ public class TestSuiteWriter {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        ArrayList<String> result = Properties.executeCommand(Properties.nativeClassExec);
+        ArrayList<String> result = Properties.executeCommand(Properties.nativeClassExec +
+                Properties.getTargetClassRegression(true).getConstructors().get(0).getName().concat("Clzz.java -exec"));
         return convertToAsserts(result, new ArrayList<>(Arrays.asList(classReader.getDeclaredMethods())), testCase);
     }
 
     private String convertToAsserts(ArrayList<String> result, ArrayList<ClassReader.Method> methods, TestCase testCase) {
 
         String code = testCase.toCode();
-        for(ClassReader.Method method : methods) {
-            String methodName = "####".concat(method.getName()).concat("__Val__");
-            for(String resultLine : result) {
-                if (resultLine.contains(methodName.substring(4))) {
-                    String val = resultLine.substring(methodName.length() - 4);
-                    for(String line : code.split(System.lineSeparator())) {
-                        if(line.contains(Properties.printCommand) && line.contains(methodName)) {
-                            String currentLine = line;
-                            line = line.replace(Properties.printCommand, "ASSERT_EQ");
-                            line = line.replace("+", ",");
-                            if(method.getReturnType().getDataType().equals("string")) {
-                                line = line.replace("\"".concat(methodName).concat("\""), "\"".concat(val).concat("\""));
-                            } else {
-                                line = line.replace("\"".concat(methodName).concat("\""), val);
-                            }
-                            code = code.replace(currentLine, line);
-                            break;
-                        }
-                    }
-                }
+        for(String line : code.split(System.lineSeparator())) {
+            String currentLine = line;
+            if(line.contains(Properties.printCommand)) {
+                String val = result.get(0).substring(result.get(0).indexOf(" ")+1);
+                result.remove(0);
+                line = line.replace(Properties.printCommand, "ASSERT_EQ");
+                line = line.replace("+", ",");
+                line = line.replace(line.substring(line.indexOf("(")+1, line.lastIndexOf("\"")+1), val);
+                code = code.replace(currentLine, line);
             }
         }
         return code;

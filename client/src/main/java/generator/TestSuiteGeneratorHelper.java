@@ -128,14 +128,14 @@ public class TestSuiteGeneratorHelper {
   }
 
   static void printTestCriterion() {
-    if (Properties.CRITERION.length > 1) {
+    /*if (Properties.CRITERION.length > 1) {
       LoggingUtils.getGeneratorLogger().info("* Test criteria:");
     } else {
       LoggingUtils.getGeneratorLogger().info("* Test criterion:");
     }
     for (int i = 0; i < Properties.CRITERION.length; i++) {
       printTestCriterion(Properties.CRITERION[i]);
-    }
+    }*/
   }
 
   public static void addAssertions(TestSuiteChromosome tests) {
