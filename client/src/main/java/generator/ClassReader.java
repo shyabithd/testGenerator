@@ -2,6 +2,8 @@ package generator;
 
 import generator.coverage.branch.Branch;
 import generator.coverage.branch.BranchPool;
+import generator.utils.LoggingUtils;
+import generator.utils.Randomness;
 import org.eclipse.cdt.core.dom.ast.*;
 import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTParameterDeclaration;
@@ -9,6 +11,7 @@ import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTVisibilityLabel;
 import org.eclipse.cdt.core.dom.ast.gnu.cpp.GPPLanguage;
 import org.eclipse.cdt.core.parser.*;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.*;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.semantics.EvalBinding;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 
@@ -44,6 +47,15 @@ public class ClassReader {
     public class Parameter {
         public DataType type;
         public String variableName;
+        public Object value;
+
+        public Parameter clone() {
+            Parameter parameter = new Parameter();
+            parameter.value = this.value;
+            parameter.variableName = this.variableName;
+            parameter.type = this.type;
+            return parameter;
+        }
     }
 
     public class Method {
@@ -55,11 +67,23 @@ public class ClassReader {
         public CPPASTBinaryExpression ifCondition;
         public CPPASTSwitchStatement switchCondition;
         public ClassReader classReader;
+        public List<String> conditionList = new ArrayList<>();
 
         public int getModifiers() {
             return 0;
         }
 
+        public Method clone() {
+            Method method = new Method();
+            for(int i =0; i < this.parameters.size(); ++i) {
+                method.parameters.add(this.parameters.get(i).clone());
+            }
+            method.lineNo = this.lineNo;
+            method.returnType = this.returnType;
+            method.classReader = this.classReader;
+            method.methodName = this.methodName;
+            return method;
+        }
         public DataType[] getGenericParameterTypes() {
             List<DataType> dataTypes = new ArrayList<>();
             for (Parameter parameter : parameters) {
@@ -133,14 +157,14 @@ public class ClassReader {
             }
 
             int exitVal = process.waitFor();
-            if (exitVal == 0) {
-                System.out.println(output);
+            if (exitVal != 0) {
+                LoggingUtils.getGeneratorLogger().info("* " + output);
+                System.exit(0);
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (IOException | InterruptedException e) {
+            LoggingUtils.getGeneratorLogger().info("* " + e.getMessage());
+            System.exit(0);
         }
     }
 
@@ -158,7 +182,9 @@ public class ClassReader {
         List<Method> methodList = new ArrayList<>();
         for(Map.Entry<String, List<Method> > entry : methods.entrySet())
         {
-            methodList.add(entry.getValue().get(0));
+            for (int i =0; i < entry.getValue().size(); i++) {
+                methodList.add(entry.getValue().get(i));
+            }
         }
         return methodList.toArray(new Method[0]);
     }
@@ -274,17 +300,173 @@ public class ClassReader {
                     method.methodName = method.methodName.substring(0, method.methodName.lastIndexOf(',')) + ")";
                 else
                     method.methodName = method.methodName + ")";
-                for(IASTNode iastNode : node.getChildren()[2].getChildren()){
-                    insertIfClauses(iastNode, method);
-                    insertSwitchClauses(iastNode, method);
+                for(IASTNode iastNode : node.getChildren()[2].getChildren()) {
+                    if (Properties.GOALORI) {
+                        Method elseMeth = method.clone();
+                        insertConditions(iastNode, method, elseMeth);
+                    }
+                    //insertIfClauses(iastNode, method);
+                    //insertSwitchClauses(iastNode, method);
                 }
-
-                insertToMap(method);
+                //if (!Properties.GOALORI) {
+                    insertToMap(method);
+                //}
             }
         }
         //System.out.println(String.format(new StringBuilder("%1$").append(index * 2).append("s").toString(), new Object[]{"-"}) + node.getClass().getSimpleName() + offset + " -> " + (printContents ? node.getRawSignature().replaceAll("\n", " \\ ") : node.getRawSignature().subSequence(0, 5)));
         for (IASTNode iastNode : children)
             parseTree(iastNode, index + 1);
+    }
+
+    private void insertParamDefault(CPPASTBinaryExpression cppastBinaryExpression, Method method, Method elseMethod, int inc) {
+
+        int ops = cppastBinaryExpression.getOperator();
+        String type1 = cppastBinaryExpression.getOperand1().getExpressionType().toString();
+        if (cppastBinaryExpression.getOperand1() instanceof CPPASTBinaryExpression) {
+            insertParamDefault((CPPASTBinaryExpression) cppastBinaryExpression.getOperand1(), method, elseMethod, inc);
+        }
+        String var1 = cppastBinaryExpression.getOperand1().toString();
+        String type2 = cppastBinaryExpression.getOperand1().getExpressionType().toString();
+        if (cppastBinaryExpression.getOperand2() instanceof CPPASTBinaryExpression) {
+            insertParamDefault((CPPASTBinaryExpression) cppastBinaryExpression.getOperand2(), method, elseMethod, inc);
+        }
+        String var2 = cppastBinaryExpression.getOperand2().toString();
+        if (cppastBinaryExpression.getOperand1() instanceof CPPASTBinaryExpression ||
+        cppastBinaryExpression.getOperand2() instanceof CPPASTBinaryExpression) {
+            return;
+        }
+        String varName1 = "", varName2="";
+        String var3 ="";
+        int val = 0;
+        int elseval;
+        switch (ops) {
+            case 10 :
+                if (cppastBinaryExpression.getOperand2() instanceof CPPASTLiteralExpression) {
+                    val = Integer.parseInt(var2) + 1;
+                    varName1 = cppastBinaryExpression.getOperand1().toString();
+                    var1 = String.valueOf(val);
+                    elseval = Integer.parseInt(var2) - 1;
+                    var3 = String.valueOf(elseval);
+                } else if (cppastBinaryExpression.getOperand1() instanceof CPPASTLiteralExpression) {
+                    val = Integer.parseInt(var1) + 1;
+                    varName2 = cppastBinaryExpression.getOperand2().toString();
+                    var2 = String.valueOf(val);
+                    elseval = Integer.parseInt(var2) - 1;
+                    var3 = String.valueOf(elseval);
+                } else {
+                    val = Randomness.nextInt(9999999);
+                    varName1 = cppastBinaryExpression.getOperand1().toString();
+                    varName2 = cppastBinaryExpression.getOperand2().toString();
+                    var1 = String.valueOf(val);
+                    var2 = String.valueOf(val + 1);
+                    var3 = String.valueOf(val - 1);
+                }
+                break;
+            case 8 :
+            case 9 :
+            case 11 :
+            case 15 :
+                if (cppastBinaryExpression.getOperand2() instanceof CPPASTLiteralExpression) {
+                    val = Integer.parseInt(var2) - 1;
+                    varName1 = cppastBinaryExpression.getOperand1().toString();
+                    var1 = String.valueOf(val);
+                    elseval = Integer.parseInt(var2) + 1;
+                    var3 = String.valueOf(elseval);
+                } else if (cppastBinaryExpression.getOperand1() instanceof CPPASTLiteralExpression) {
+                    val = Integer.parseInt(var1) - 1;
+                    varName2 = cppastBinaryExpression.getOperand2().toString();
+                    var2 = String.valueOf(val);
+                    elseval = Integer.parseInt(var2) + 1;
+                    var3 = String.valueOf(elseval);
+                } else {
+                    val = Randomness.nextInt(9999999);
+                    varName1 = cppastBinaryExpression.getOperand1().toString();
+                    varName2 = cppastBinaryExpression.getOperand2().toString();
+                    var1 = String.valueOf(val);
+                    var2 = String.valueOf(val + 1);
+                    var3 = String.valueOf(val - 1);
+                }
+                break;
+        }
+        for(int i =0; i< method.parameters.size(); ++i) {
+            if(!"".equals(method.parameters.get(i).value)) {
+                if (method.parameters.get(i).variableName.equals(varName1)) {
+                    method.parameters.get(i).value = var1;
+                    elseMethod.parameters.get(i).value = var3;
+                    break;
+                } else if (method.parameters.get(i).variableName.equals(varName2)) {
+                    method.parameters.get(i).value = var2;
+                    elseMethod.parameters.get(i).value = var3;
+                    break;
+                }
+            }
+        }
+    }
+    private void insertConditions(IASTNode iastNode, Method method, Method elseMethod) {
+        if(iastNode instanceof CPPASTIfStatement) {
+            CPPASTIfStatement cppastIfStatement = (CPPASTIfStatement) iastNode;
+            if (cppastIfStatement.getThenClause() != null) {
+                CPPASTBinaryExpression cppastBinaryExpression = (CPPASTBinaryExpression) cppastIfStatement.getConditionExpression();
+                int i = 0;
+                if (cppastBinaryExpression.getOperand1() instanceof CPPASTUnaryExpression) {
+                    insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand1()).getOperand(), method, elseMethod, i);
+                } else {
+                    insertParamDefault(cppastBinaryExpression, method, elseMethod, i);
+                }
+                if (cppastBinaryExpression.getOperand2() instanceof CPPASTUnaryExpression) {
+                    i=2;
+                    insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand2()).getOperand(), method, elseMethod, i);
+                } else {
+                    insertParamDefault(cppastBinaryExpression, method, elseMethod, i);
+                }
+                insertToMap(elseMethod);
+                insertToMap(method);
+                if (cppastIfStatement.getThenClause() instanceof IASTCompoundStatement) {
+                    IASTCompoundStatement iastStatementCmp = (IASTCompoundStatement) cppastIfStatement.getThenClause();
+                    for (IASTStatement iastStatement : iastStatementCmp.getStatements()) {
+                        if (iastStatement instanceof CPPASTIfStatement) {
+                            insertConditions(iastStatement, method, elseMethod);
+                        }
+                    }
+                }
+            }
+            if (cppastIfStatement.getElseClause() != null) {
+                elseMethod = elseMethod.clone();
+                method = method.clone();
+                if (cppastIfStatement.getThenClause() instanceof IASTCompoundStatement) {
+                    IASTCompoundStatement iastStatementCmp = (IASTCompoundStatement) cppastIfStatement.getThenClause();
+                    for (IASTStatement iastStatement : iastStatementCmp.getStatements()) {
+                        if (iastStatement instanceof CPPASTIfStatement) {
+                            insertConditions(iastStatement, method, elseMethod);
+                        }
+                    }
+                } else {
+                    CPPASTBinaryExpression cppastBinaryExpression = (CPPASTBinaryExpression) ((CPPASTIfStatement) cppastIfStatement.getElseClause()).getConditionExpression();
+                    int i = 0;
+                    if (cppastBinaryExpression.getOperand1() instanceof CPPASTUnaryExpression) {
+                        insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand1()).getOperand(), method, elseMethod, i);
+                    } else {
+                        insertParamDefault(cppastBinaryExpression, method, elseMethod, i);
+                    }
+                    if (cppastBinaryExpression.getOperand2() instanceof CPPASTUnaryExpression) {
+                        i = 2;
+                        insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand2()).getOperand(), method, elseMethod, i);
+                    } else {
+                        insertParamDefault(cppastBinaryExpression, method, elseMethod, i);
+                    }
+                    insertToMap(elseMethod);
+                    insertToMap(method);
+                    if (((CPPASTIfStatement) cppastIfStatement.getElseClause()).getThenClause() instanceof IASTCompoundStatement) {
+                        IASTCompoundStatement iastStatementCmp = (IASTCompoundStatement) ((CPPASTIfStatement) cppastIfStatement.getElseClause()).getThenClause();
+                        for (IASTStatement iastStatement : iastStatementCmp.getStatements()) {
+                            if (iastStatement instanceof CPPASTIfStatement) {
+                                insertConditions(iastStatement, method, elseMethod);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void insertToMap(Method method) {
@@ -323,6 +505,7 @@ public class ClassReader {
                     method.methodName = currentMethod.methodName;
                     method.returnType = currentMethod.returnType;
                     method.ifCondition = cppastBinaryExpression;
+                    method.conditionList = currentMethod.conditionList;
                     insertToMap(method);
                     insertIfClauses(childNode, currentMethod);
                 }

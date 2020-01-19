@@ -86,6 +86,9 @@ public class IntPrimitiveStatement extends NumericalPrimitiveStatement<Integer> 
 		value = (int) (min + ((max - min) / 2));
 	}
 
+	public void setValue(int value) {
+		this.value = value;
+	}
 	/* (non-Javadoc)
 	 * @see org.evosuite.testcase.NumericalPrimitiveStatement#decrement()
 	 */

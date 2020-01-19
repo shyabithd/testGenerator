@@ -232,7 +232,7 @@ public class TestFactory {
 		int length = test.size();
 
 		if (!field.isStatic()) {
-			callee = createOrReuseVariable(test, field.getOwnerType(), position,
+			callee = createOrReuseVariable(test, field.getOwnerType(), null, position,
 					recursionDepth, null, false, false, false);
 			position += test.size() - length;
 
@@ -276,7 +276,7 @@ public class TestFactory {
 		int length = test.size();
 		VariableReference callee = null;
 		if (!field.isStatic()) {
-			callee = createOrReuseVariable(test, field.getOwnerType(), position,
+			callee = createOrReuseVariable(test, field.getOwnerType(), null, position,
 					recursionDepth, null, false, false, false);
 			position += test.size() - length;
 			length = test.size();
@@ -288,7 +288,7 @@ public class TestFactory {
 
 		}
 
-		VariableReference var = createOrReuseVariable(test, field.getFieldType(),
+		VariableReference var = createOrReuseVariable(test, field.getFieldType(), null,
 		                                              position, recursionDepth, callee, true, false, false);
 		int newLength = test.size();
 		position += (newLength - length);
@@ -324,7 +324,7 @@ public class TestFactory {
 
 		FieldReference fieldVar = new FieldReference(test, field, callee);
 		int length = test.size();
-		VariableReference value = createOrReuseVariable(test, fieldVar.getType(),
+		VariableReference value = createOrReuseVariable(test, fieldVar.getType(), null,
 				position, 0, callee, true, false, true);
 
 		int newLength = test.size();
@@ -365,7 +365,7 @@ public class TestFactory {
 
 		try {
 			if (!method.isStatic()) {
-				callee = createOrReuseVariable(test, method.getOwnerType(), position,
+				callee = createOrReuseVariable(test, method.getOwnerType(), null, position,
 						recursionDepth, null, false, false, false);
 
 				position += test.size() - length;
@@ -588,7 +588,7 @@ public class TestFactory {
 	 */
 	public VariableReference attemptGeneration(TestCase test, DataType type, int position)
 	        throws ConstructionFailedException {
-		return attemptGeneration(test, type, position, 0, false, null, true, true);
+		return attemptGeneration(test, type, null, position, 0, false, null, true, true);
 	}
 
 
@@ -603,7 +603,7 @@ public class TestFactory {
 	 * @return
 	 * @throws ConstructionFailedException
 	 */
-	protected VariableReference attemptGeneration(TestCase test, DataType type, int position,
+	protected VariableReference attemptGeneration(TestCase test, DataType type, ClassReader.Parameter parameter, int position,
 												  int recursionDepth, boolean allowNull, VariableReference generatorRefToExclude,
 												  boolean canUseMocks, boolean canReuseExistingVariables)
 			throws ConstructionFailedException {
@@ -614,11 +614,11 @@ public class TestFactory {
 
 			if (!TestUsageChecker.canUse(clazz.getRawClass()))
 				throw new ConstructionFailedException("Cannot generate unaccessible enum " + clazz);
-			return createPrimitive(test, clazz, position, recursionDepth);
+			return createPrimitive(test, clazz, parameter, position, recursionDepth);
 
 		} else if (clazz.isPrimitive() || clazz.isClass()) {
 
-			return createPrimitive(test, clazz, position, recursionDepth);
+			return createPrimitive(test, clazz, parameter, position, recursionDepth);
 
 		} else if (clazz.isString()) {
 
@@ -626,7 +626,7 @@ public class TestFactory {
 				logger.debug("Using a null reference to satisfy the type: {}", type);
 				return createNull(test, type, position, recursionDepth);
 			} else {
-				return createPrimitive(test, clazz, position, recursionDepth);
+				return createPrimitive(test, clazz, parameter, position, recursionDepth);
 			}
 
 		} else if (clazz.isArray()) {
@@ -842,7 +842,7 @@ public class TestFactory {
 	}
 
 	private VariableReference createPrimitive(TestCase test, GenericClass clazz,
-	        int position, int recursionDepth) throws ConstructionFailedException {
+	        ClassReader.Parameter parameter, int position, int recursionDepth) throws ConstructionFailedException {
 		// Special case: we cannot instantiate Class<Class<?>>
 		if (clazz.isClass()) {
 			if (clazz.hasWildcardOrTypeVariables()) {
@@ -854,6 +854,9 @@ public class TestFactory {
 		}
 		Statement st = PrimitiveStatement.getRandomStatement(test, clazz,
 		                                                              position);
+		if(parameter.value != null){
+			((IntPrimitiveStatement) st).setValue(Integer.parseInt((String) parameter.value));
+		}
 		VariableReference ret = test.addStatement(st, position);
 		ret.setDistance(recursionDepth);
 		return ret;
@@ -1027,7 +1030,7 @@ public class TestFactory {
 	 * @throws ConstructionFailedException
 	 */
 	private VariableReference createOrReuseVariable(TestCase test, DataType parameterType,
-	        int position, int recursionDepth, VariableReference exclude, boolean allowNull,
+													ClassReader.Parameter parameter, int position, int recursionDepth, VariableReference exclude, boolean allowNull,
 													boolean excludeCalleeGenerators, boolean canUseMocks)
 	        throws ConstructionFailedException {
 
@@ -1058,7 +1061,7 @@ public class TestFactory {
 		}
 
 		//if chosen to not re-use existing variable, try create a new one
-		VariableReference created = createVariable(test, parameterType,
+		VariableReference created = createVariable(test, parameterType, parameter,
 				position, recursionDepth, exclude, allowNull,
 				excludeCalleeGenerators, canUseMocks, true);
 		if(created != null){
@@ -1083,7 +1086,7 @@ public class TestFactory {
 	}
 
 
-	private VariableReference createVariable(TestCase test, DataType parameterType,
+	private VariableReference createVariable(TestCase test, DataType parameterType, ClassReader.Parameter parameter,
 											 int position, int recursionDepth, VariableReference exclude, boolean allowNull,
 											 boolean excludeCalleeGenerators, boolean canUseMocks, boolean canReuseExistingVariables)
 			throws ConstructionFailedException {
@@ -1111,7 +1114,7 @@ public class TestFactory {
 			if (excludeCalleeGenerators) {
 				generatorRefToExclude = exclude;
 			}
-			VariableReference reference = attemptGeneration(test, parameterType,
+			VariableReference reference = attemptGeneration(test, parameterType, parameter,
 					position, recursionDepth,
 					allowNull, generatorRefToExclude, canUseMocks, canReuseExistingVariables);
 
@@ -1745,11 +1748,11 @@ public class TestFactory {
 
 			if (canReuseExistingVariables) {
 				logger.debug("Can re-use variables");
-				var = createOrReuseVariable(test, parameterType, position, recursionDepth, callee, allowNullForParameter,
+				var = createOrReuseVariable(test, parameterType, parameter, position, recursionDepth, callee, allowNullForParameter,
 						excludeCalleeGenerators, true);
 			} else {
 				logger.debug("Cannot re-use variables: attempt at creating new one");
-				var = createVariable(test, parameterType, position, recursionDepth, callee, allowNullForParameter,
+				var = createVariable(test, parameterType, parameterList.get(i), position, recursionDepth, callee, allowNullForParameter,
 						excludeCalleeGenerators, true, false);
 				if (var == null) {
 					throw new ConstructionFailedException(

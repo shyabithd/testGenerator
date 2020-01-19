@@ -2,6 +2,7 @@ package generator;
 
 import generator.classpath.ClassPathHandler;
 import generator.testcase.TestCase;
+import generator.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,10 @@ public class TestSuiteWriter {
         }
         ArrayList<String> result = Properties.executeCommand(Properties.nativeClassExec +
                 Properties.getTargetClassRegression(true).getConstructors().get(0).getName().concat("Clzz.java -exec"));
+        result.forEach(val -> {if(val.contains("Exception in thread")) {
+            LoggingUtils.getGeneratorLogger().info("* " + result);
+            System.exit(0);}
+        });
         return convertToAsserts(result, new ArrayList<>(Arrays.asList(classReader.getDeclaredMethods())), testCase);
     }
 

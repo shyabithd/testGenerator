@@ -44,9 +44,13 @@ public class TestSuiteChromosomeFactory implements ChromosomeFactory<TestSuiteCh
 		chromosome.clearTests();
 		// ((AllMethodsChromosomeFactory)test_factory).clear();
 
-		int numTests = Randomness.nextInt(Properties.MIN_INITIAL_TESTS,
-		                                  Properties.MAX_INITIAL_TESTS + 1);
-
+		int numTests;
+		if (!Properties.GOALORI) {
+			numTests = Randomness.nextInt(Properties.MIN_INITIAL_TESTS,
+					Properties.MAX_INITIAL_TESTS + 1);
+		} else {
+			numTests = Properties.getTargetClassRegression(true).getDeclaredMethods().length;
+		}
 		for (int i = 0; i < numTests; i++) {
 			TestChromosome test = testChromosomeFactory.getChromosome();
 			chromosome.addTest(test);

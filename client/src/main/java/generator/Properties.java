@@ -1386,6 +1386,9 @@ public class Properties {
 	@Parameter(key = "report", group = "Debugging", description = "Enables report generation")
 	public static boolean GENREPORT = false;
 
+	@Parameter(key = "enablegoal", group = "Debugging", description = "Enables goal")
+	public static boolean GOALORI = false;
+
 	// ---------------------------------------------------------------
 	// TODO: Fix description
 	public enum AlternativeFitnessCalculationMode {

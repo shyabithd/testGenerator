@@ -1,18 +1,22 @@
 package generator;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import java.util.Stack;
 
 public class EvaluateString
 {
-    public static int evaluate(String expression)
+    public static boolean evaluate(String expression)
     {
         char[] tokens = expression.toCharArray();
 
         // Stack for numbers: 'values'
-        Stack<Integer> values = new Stack<Integer>();
+        Stack<Boolean> values = new Stack<>();
+        Stack<Integer> integerStack = new Stack<>();
 
         // Stack for Operators: 'ops'
         Stack<Character> ops = new Stack<Character>();
+        Stack<Character> opsLgic = new Stack<Character>();
 
         for (int i = 0; i < tokens.length; i++)
         {
@@ -27,7 +31,8 @@ public class EvaluateString
                 // There may be more than one digits in number
                 while (i < tokens.length && tokens[i] >= '0' && tokens[i] <= '9')
                     sbuf.append(tokens[i++]);
-                values.push(Integer.parseInt(sbuf.toString()));
+                integerStack.push(Integer.parseInt(sbuf.toString()));
+                i--;
             }
 
             // Current token is an opening brace, push it to 'ops'
@@ -38,29 +43,34 @@ public class EvaluateString
             else if (tokens[i] == ')')
             {
                 while (ops.peek() != '(')
-                    values.push(applyOp(ops.pop(), values.pop(), values.pop()));
+                    values.push(applyOp(ops.pop(), integerStack.pop(), integerStack.pop()));
                 ops.pop();
             }
 
             // Current token is an operator.
-            else if (tokens[i] == '+' || tokens[i] == '-' ||
-                    tokens[i] == '*' || tokens[i] == '/')
+            else if (tokens[i] == '<' || tokens[i] == '>' ||
+                    (tokens[i] == '=' && tokens[i+1] == '='))
             {
                 // While top of 'ops' has same or greater precedence to current
                 // token, which is an operator. Apply operator on top of 'ops'
                 // to top two elements in values stack
                 while (!ops.empty() && hasPrecedence(tokens[i], ops.peek()))
-                    values.push(applyOp(ops.pop(), values.pop(), values.pop()));
+                    values.push(applyOp(ops.pop(), integerStack.pop(), integerStack.pop()));
 
                 // Push current token to 'ops'.
                 ops.push(tokens[i]);
+            } else if ((tokens[i] == '&' && tokens[i+1] == '&') ||
+                (tokens[i] == '|' && tokens[i+1] == '|')) {
+                opsLgic.push(tokens[i]);
             }
         }
 
         // Entire expression has been parsed at this point, apply remaining
         // ops to remaining values
         while (!ops.empty())
-            values.push(applyOp(ops.pop(), values.pop(), values.pop()));
+            values.push(applyOp(ops.pop(), integerStack.pop(), integerStack.pop()));
+        while (!opsLgic.empty())
+            values.push(applyOp(opsLgic.pop(), values.pop(), values.pop()));
 
         // Top of 'values' contains result, return it
         return values.pop();
@@ -72,30 +82,36 @@ public class EvaluateString
     {
         if (op2 == '(' || op2 == ')')
             return false;
-        if ((op1 == '*' || op1 == '/') && (op2 == '+' || op2 == '-'))
-            return false;
         else
             return true;
     }
 
     // A utility method to apply an operator 'op' on operands 'a'
     // and 'b'. Return the result.
-    public static int applyOp(char op, int b, int a)
+    public static boolean applyOp(char op, boolean b, boolean a)
     {
         switch (op)
         {
-            case '+':
-                return a + b;
-            case '-':
-                return a - b;
-            case '*':
-                return a * b;
-            case '/':
-                if (b == 0)
-                    throw new
-                            UnsupportedOperationException("Cannot divide by zero");
-                return a / b;
+            case '&':
+                return a && b;
+            case '|':
+                return a || b;
         }
-        return 0;
+        return false;
+    }
+    // A utility method to apply an operator 'op' on operands 'a'
+    // and 'b'. Return the result.
+    public static boolean applyOp(char op, int b, int a)
+    {
+        switch (op)
+        {
+            case '<':
+                return a < b;
+            case '>':
+                return a > b;
+            case '=':
+                return a == b;
+        }
+        return false;
     }
 }

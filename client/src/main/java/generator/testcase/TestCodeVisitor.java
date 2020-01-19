@@ -920,8 +920,8 @@ public class TestCodeVisitor extends TestVisitor {
 			// If unused, then we don't want to print anything:
 			//else
 			//	result += getClassName(retval) + " " + getVariableName(retval) + " = ";
-
-			result += retVal + callee_str + "->" + method.getName() + "(" + parameter_string + ");";
+			result += retVal + "class0" + "->" + method.getName() + "(" + parameter_string + ");";
+			//result += retVal + callee_str + "->" + method.getName() + "(" + parameter_string + ");";
 		}
 		if(!retVal.equals("")) {
 			result += System.lineSeparator() + Properties.printCommand + "(\"####"+ method.getMethod().getName().concat("__Val__" + String.valueOf(TestCodeVisitor.inc) +" \" + " +

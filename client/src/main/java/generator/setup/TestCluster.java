@@ -45,6 +45,7 @@ public class TestCluster {
 
 	/** UUT methods we want to cover when testing */
 	private final static Set<GenericAccessibleObject<?>> testMethods = new LinkedHashSet<>();
+	private final static Set<GenericAccessibleObject<?>> testMethodsOriginal = new LinkedHashSet<>();
 
 	/**
 	 * Methods used to modify and set the environment of the UUT
@@ -84,6 +85,7 @@ public class TestCluster {
 	public static void reset() {
 		analyzedClasses.clear();
 		testMethods.clear();
+		testMethodsOriginal.clear();
 		generators.clear();
 		generatorCache.clear();
 		modifiers.clear();
@@ -297,6 +299,7 @@ public class TestCluster {
 	public void addTestCall(GenericAccessibleObject<?> call) throws IllegalArgumentException{
 		Inputs.checkNull(call);
 		testMethods.add(call);
+		testMethodsOriginal.add(call);
 	}
 
 	public void removeTestCall(GenericAccessibleObject<?> call) {
@@ -1230,7 +1233,14 @@ public class TestCluster {
 			candidateTestMethods = sortCalls(candidateTestMethods);
 		}
 
-		GenericAccessibleObject<?> choice = Properties.SORT_CALLS ? ListUtil.selectRankBiased(candidateTestMethods) : Randomness.choice(candidateTestMethods);
+		GenericAccessibleObject<?> choice;
+		if (Properties.GOALORI && testMethodsOriginal.size() != 0) {
+			candidateTestMethods = new ArrayList<>(testMethodsOriginal);
+			choice = candidateTestMethods.get(0);
+			testMethodsOriginal.remove(choice);
+		} else {
+			choice = Properties.SORT_CALLS ? ListUtil.selectRankBiased(candidateTestMethods) : Randomness.choice(candidateTestMethods);
+		}
 		logger.debug("Chosen call: " + choice);
 		if (choice.getOwnerClass().hasWildcardOrTypeVariables()) {
 			GenericClass concreteClass = choice.getOwnerClass().getGenericInstantiation();
