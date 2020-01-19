@@ -14,6 +14,7 @@ import org.eclipse.cdt.internal.core.dom.parser.cpp.*;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.semantics.EvalBinding;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
+import runtime.Random;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -300,17 +301,25 @@ public class ClassReader {
                     method.methodName = method.methodName.substring(0, method.methodName.lastIndexOf(',')) + ")";
                 else
                     method.methodName = method.methodName + ")";
+                List<HashMap<String, String>> list = new ArrayList<>();
                 for(IASTNode iastNode : node.getChildren()[2].getChildren()) {
-                    if (Properties.GOALORI) {
-                        Method elseMeth = method.clone();
-                        insertConditions(iastNode, method, elseMeth);
-                    }
+                    Method elseMeth = method.clone();
+                    HashMap<String, String> branchMap = new HashMap<>();
+                    list.add(branchMap);
+                    insertConditions(iastNode, method, elseMeth, branchMap);
                     //insertIfClauses(iastNode, method);
                     //insertSwitchClauses(iastNode, method);
                 }
                 //if (!Properties.GOALORI) {
                     insertToMap(method);
                 //}
+                if (Properties.GOALORI) {
+                    for(int j = 0; j < list.size() - 1; ++j) {
+                        int size = method.getParameters().length;
+                        String[] arr = new String[size];
+                        allCombination(size, arr, method, list.get(j), 0);
+                    }
+                }
             }
         }
         //System.out.println(String.format(new StringBuilder("%1$").append(index * 2).append("s").toString(), new Object[]{"-"}) + node.getClass().getSimpleName() + offset + " -> " + (printContents ? node.getRawSignature().replaceAll("\n", " \\ ") : node.getRawSignature().subSequence(0, 5)));
@@ -318,17 +327,35 @@ public class ClassReader {
             parseTree(iastNode, index + 1);
     }
 
-    private void insertParamDefault(CPPASTBinaryExpression cppastBinaryExpression, Method method, Method elseMethod, int inc) {
+    private void allCombination(int n, String arr[], Method method, HashMap<String, String> branchMap, int i) {
+
+        if (i == n) {
+            Method method1 = method.clone();
+            for (int k = 0; k < i; k++) {
+                method1.getParameters()[k].value = arr[k];
+            }
+            insertToMap(method1);
+            return;
+        }
+
+        arr[i] = branchMap.get(method.parameters.get(i).variableName.concat("False"));
+        allCombination(n, arr, method, branchMap, i + 1);
+
+        arr[i] = branchMap.get(method.parameters.get(i).variableName.concat("True"));
+        allCombination(n, arr, method, branchMap, i + 1);
+    }
+
+    private void insertParamDefault(CPPASTBinaryExpression cppastBinaryExpression, Method method, Method elseMethod, HashMap<String, String> branchMap) {
 
         int ops = cppastBinaryExpression.getOperator();
         String type1 = cppastBinaryExpression.getOperand1().getExpressionType().toString();
         if (cppastBinaryExpression.getOperand1() instanceof CPPASTBinaryExpression) {
-            insertParamDefault((CPPASTBinaryExpression) cppastBinaryExpression.getOperand1(), method, elseMethod, inc);
+            insertParamDefault((CPPASTBinaryExpression) cppastBinaryExpression.getOperand1(), method, elseMethod, branchMap);
         }
         String var1 = cppastBinaryExpression.getOperand1().toString();
         String type2 = cppastBinaryExpression.getOperand1().getExpressionType().toString();
         if (cppastBinaryExpression.getOperand2() instanceof CPPASTBinaryExpression) {
-            insertParamDefault((CPPASTBinaryExpression) cppastBinaryExpression.getOperand2(), method, elseMethod, inc);
+            insertParamDefault((CPPASTBinaryExpression) cppastBinaryExpression.getOperand2(), method, elseMethod, branchMap);
         }
         String var2 = cppastBinaryExpression.getOperand2().toString();
         if (cppastBinaryExpression.getOperand1() instanceof CPPASTBinaryExpression ||
@@ -340,7 +367,7 @@ public class ClassReader {
         int val = 0;
         int elseval;
         switch (ops) {
-            case 10 :
+            case 10:
                 if (cppastBinaryExpression.getOperand2() instanceof CPPASTLiteralExpression) {
                     val = Integer.parseInt(var2) + 1;
                     varName1 = cppastBinaryExpression.getOperand1().toString();
@@ -362,22 +389,26 @@ public class ClassReader {
                     var3 = String.valueOf(val - 1);
                 }
                 break;
-            case 8 :
-            case 9 :
-            case 11 :
-            case 15 :
+            case 8:
+            case 9:
+            case 11:
+            case 15:
                 if (cppastBinaryExpression.getOperand2() instanceof CPPASTLiteralExpression) {
                     val = Integer.parseInt(var2) - 1;
                     varName1 = cppastBinaryExpression.getOperand1().toString();
                     var1 = String.valueOf(val);
                     elseval = Integer.parseInt(var2) + 1;
                     var3 = String.valueOf(elseval);
+                    branchMap.put(varName1.concat("True"), var1);
+                    branchMap.put(varName1.concat("False"), var3);
                 } else if (cppastBinaryExpression.getOperand1() instanceof CPPASTLiteralExpression) {
                     val = Integer.parseInt(var1) - 1;
                     varName2 = cppastBinaryExpression.getOperand2().toString();
                     var2 = String.valueOf(val);
                     elseval = Integer.parseInt(var2) + 1;
                     var3 = String.valueOf(elseval);
+                    branchMap.put(varName1.concat("True"), var2);
+                    branchMap.put(varName1.concat("False"), var3);
                 } else {
                     val = Randomness.nextInt(9999999);
                     varName1 = cppastBinaryExpression.getOperand1().toString();
@@ -385,39 +416,42 @@ public class ClassReader {
                     var1 = String.valueOf(val);
                     var2 = String.valueOf(val + 1);
                     var3 = String.valueOf(val - 1);
+                    branchMap.put(varName1.concat("True"), var2);
+                    branchMap.put(varName1.concat("False"), var3);
                 }
                 break;
         }
-        for(int i =0; i< method.parameters.size(); ++i) {
-            if(!"".equals(method.parameters.get(i).value)) {
-                if (method.parameters.get(i).variableName.equals(varName1)) {
-                    method.parameters.get(i).value = var1;
-                    elseMethod.parameters.get(i).value = var3;
-                    break;
-                } else if (method.parameters.get(i).variableName.equals(varName2)) {
-                    method.parameters.get(i).value = var2;
-                    elseMethod.parameters.get(i).value = var3;
-                    break;
+
+        if (!Properties.GOALORI) {
+            for(int i =0; i< method.parameters.size(); ++i) {
+                if(!"".equals(method.parameters.get(i).value)) {
+                    if (method.parameters.get(i).variableName.equals(varName1)) {
+                        method.parameters.get(i).value = var1;
+                        elseMethod.parameters.get(i).value = var3;
+                        break;
+                    } else if (method.parameters.get(i).variableName.equals(varName2)) {
+                        method.parameters.get(i).value = var2;
+                        elseMethod.parameters.get(i).value = var3;
+                        break;
+                    }
                 }
             }
         }
     }
-    private void insertConditions(IASTNode iastNode, Method method, Method elseMethod) {
+    private void insertConditions(IASTNode iastNode, Method method, Method elseMethod, HashMap<String, String> branchMap) {
         if(iastNode instanceof CPPASTIfStatement) {
             CPPASTIfStatement cppastIfStatement = (CPPASTIfStatement) iastNode;
             if (cppastIfStatement.getThenClause() != null) {
                 CPPASTBinaryExpression cppastBinaryExpression = (CPPASTBinaryExpression) cppastIfStatement.getConditionExpression();
-                int i = 0;
                 if (cppastBinaryExpression.getOperand1() instanceof CPPASTUnaryExpression) {
-                    insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand1()).getOperand(), method, elseMethod, i);
+                    insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand1()).getOperand(), method, elseMethod, branchMap);
                 } else {
-                    insertParamDefault(cppastBinaryExpression, method, elseMethod, i);
+                    insertParamDefault(cppastBinaryExpression, method, elseMethod, branchMap);
                 }
                 if (cppastBinaryExpression.getOperand2() instanceof CPPASTUnaryExpression) {
-                    i=2;
-                    insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand2()).getOperand(), method, elseMethod, i);
+                    insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand2()).getOperand(), method, elseMethod, branchMap);
                 } else {
-                    insertParamDefault(cppastBinaryExpression, method, elseMethod, i);
+                    insertParamDefault(cppastBinaryExpression, method, elseMethod, branchMap);
                 }
                 insertToMap(elseMethod);
                 insertToMap(method);
@@ -425,7 +459,7 @@ public class ClassReader {
                     IASTCompoundStatement iastStatementCmp = (IASTCompoundStatement) cppastIfStatement.getThenClause();
                     for (IASTStatement iastStatement : iastStatementCmp.getStatements()) {
                         if (iastStatement instanceof CPPASTIfStatement) {
-                            insertConditions(iastStatement, method, elseMethod);
+                            insertConditions(iastStatement, method, elseMethod, branchMap);
                         }
                     }
                 }
@@ -437,22 +471,20 @@ public class ClassReader {
                     IASTCompoundStatement iastStatementCmp = (IASTCompoundStatement) cppastIfStatement.getThenClause();
                     for (IASTStatement iastStatement : iastStatementCmp.getStatements()) {
                         if (iastStatement instanceof CPPASTIfStatement) {
-                            insertConditions(iastStatement, method, elseMethod);
+                            insertConditions(iastStatement, method, elseMethod, branchMap);
                         }
                     }
                 } else {
                     CPPASTBinaryExpression cppastBinaryExpression = (CPPASTBinaryExpression) ((CPPASTIfStatement) cppastIfStatement.getElseClause()).getConditionExpression();
-                    int i = 0;
                     if (cppastBinaryExpression.getOperand1() instanceof CPPASTUnaryExpression) {
-                        insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand1()).getOperand(), method, elseMethod, i);
+                        insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand1()).getOperand(), method, elseMethod, branchMap);
                     } else {
-                        insertParamDefault(cppastBinaryExpression, method, elseMethod, i);
+                        insertParamDefault(cppastBinaryExpression, method, elseMethod, branchMap);
                     }
                     if (cppastBinaryExpression.getOperand2() instanceof CPPASTUnaryExpression) {
-                        i = 2;
-                        insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand2()).getOperand(), method, elseMethod, i);
+                        insertParamDefault((CPPASTBinaryExpression) ((CPPASTUnaryExpression) cppastBinaryExpression.getOperand2()).getOperand(), method, elseMethod, branchMap);
                     } else {
-                        insertParamDefault(cppastBinaryExpression, method, elseMethod, i);
+                        insertParamDefault(cppastBinaryExpression, method, elseMethod, branchMap);
                     }
                     insertToMap(elseMethod);
                     insertToMap(method);
@@ -460,7 +492,7 @@ public class ClassReader {
                         IASTCompoundStatement iastStatementCmp = (IASTCompoundStatement) ((CPPASTIfStatement) cppastIfStatement.getElseClause()).getThenClause();
                         for (IASTStatement iastStatement : iastStatementCmp.getStatements()) {
                             if (iastStatement instanceof CPPASTIfStatement) {
-                                insertConditions(iastStatement, method, elseMethod);
+                                insertConditions(iastStatement, method, elseMethod, branchMap);
                             }
                         }
                     }
@@ -611,6 +643,8 @@ public class ClassReader {
                             nativeClass += "\t\tpublic native @ByVal " + declaration.getRawSignature() +"\r\n";
                         } else if (!isPrivate && ast.getSyntax().getImage().contains("string") && isClass) {
                             nativeClass += "\t\tpublic native @StdString String "+ declaration.getRawSignature() +"\r\n";
+                        } else if (ast.getSyntax().toString().contains("void")) {
+                            nativeClass += "\t\tpublic native "+ declaration.getRawSignature() +"\r\n";
                         }
                         //System.out.println("------- typedef: " + typedef);
                         IASTNode[] children = typedef.getChildren();
@@ -636,12 +670,12 @@ public class ClassReader {
                     //System.out.println("------- typedef: " + typedef.getName());
 
                     try {
+                        String param = "";
+                        for (ICPPASTParameterDeclaration var : typedef.getParameters()) {
+                            param += var.getOriginalNode().getRawSignature();
+                        }
                         if (!isPrivate && ast.getSyntax().toString().contains("int") && isClass) {
-                            String param = "";
-                            for (ICPPASTParameterDeclaration var : typedef.getParameters()) {
-                                param += var.getOriginalNode().getRawSignature();
-                            }
-                            nativeClass += "\t\tpublic native @ByVal int " + typedef.getName() +"(" + param + ");\r\n";
+                            nativeClass += "\t\tpublic native @ByVal int " + typedef.getName() + "(" + param + ");\r\n";
                         } else if (!isPrivate && ast.getSyntax().toString().contains("string") && isClass) {
                             nativeClass += "\t\tpublic native @StdString String "+ typedef.getName() +"();\r\n";
                         }

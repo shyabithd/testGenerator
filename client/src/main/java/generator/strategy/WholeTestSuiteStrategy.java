@@ -82,7 +82,7 @@ public class WholeTestSuiteStrategy extends TestGenerationStrategy {
 		TestSuiteChromosome testSuite = null;
 		if (!(Properties.STOP_ZERO && goals.isEmpty()) || ArrayUtil.contains(Properties.CRITERION, Properties.Criterion.EXCEPTION)) {
 			// Perform search
-			LoggingUtils.getGeneratorLogger().info("* Using seed {}", Randomness.getSeed() );
+			//LoggingUtils.getGeneratorLogger().info("* Using seed {}", Randomness.getSeed() );
 			LoggingUtils.getGeneratorLogger().info("* Starting evolution");
 			ClientServices.getInstance().getClientNode().changeState(ClientState.SEARCH);
 
@@ -115,8 +115,7 @@ public class WholeTestSuiteStrategy extends TestGenerationStrategy {
 					+ algorithm.getAge()
 					+ " generations, "
 					+ MaxStatementsStoppingCondition.getNumExecutedStatements()
-					+ " statements, best individual has fitness: "
-					+ testSuite.getFitness());
+					+ " statements");
 		}
 
 		// Search is finished, send statistics

@@ -907,7 +907,7 @@ public class TestCodeVisitor extends TestVisitor {
 		}
 		boolean isPrimitive = method.getMethod().getReturnType().isPrimitive();
 		String retVal = "";
-		if(isPrimitive) {
+		if(isPrimitive && !"void".equals(method.getMethod().getReturnType().getDataType())) {
 			retVal = method.getMethod().getReturnType().getDataType().concat(" ").concat(method.getMethod().getName()).concat("__Val__").concat(String.valueOf(TestCodeVisitor.inc)).concat(" = ");
 		}
 
@@ -915,8 +915,8 @@ public class TestCodeVisitor extends TestVisitor {
 			result += retVal + callee_str + "->" + method.getName() + "(" + parameter_string + ");";
 		} else {
 			// if (exception == null || !lastStatement)
-			if (!unused)
-				result += getVariableName(retval) + " = ";
+			//if (!unused)
+			//	result += getVariableName(retval) + " = ";
 			// If unused, then we don't want to print anything:
 			//else
 			//	result += getClassName(retval) + " " + getVariableName(retval) + " = ";

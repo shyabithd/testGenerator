@@ -65,7 +65,7 @@ public class TestGeneration {
         ClassReader classReader = new ClassReader();
         try {
             classReader.readFile(projectCP+"/"+target);
-            classReader.parseTree();
+            //classReader.parseTree();
             TestGenerationContext.getInstance().setClassReader(classReader);
             Properties.setTargetClass(classReader);
         } catch (CoreException e) {
